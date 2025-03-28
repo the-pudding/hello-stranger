@@ -1,11 +1,18 @@
 export default [
 	{
-		"id": "1352iFuTSDDFPNAXBbOaEXkF8mCdjPu6B43hpUF2P3C4",
+		"id": "1d1Zvs7dT584j8hst1FOWZ4VqjcS8fjRnSfCfJUBmwAg",
 		"filepath": "src/data/copy.json"
 	},
 	{
-		"id": "1te65h_nywgXVAzvV-9E5fmHGblcKvctf_cNZgeam9Tk",
+		"id": "1lBKh9zDymbOg0exr_wMvGFuQLisp-vC5B3G8yakR1ZE",
 		"gid": "0",
-		"filepath": "src/data/test.csv"
+		"group": {"group": "convo_id"},
+		"filepath": "src/data/convos.csv"
+	},
+	{
+		"id": "1v1z5BV0NDOrpsGG10wYo4kXlVRAtyfjX8cfZI_wZDnk",
+		"gid": "0",
+		"group": {"group": "user_id", "id": "convo_id"},
+		"filepath": "src/data/people.csv"
 	}
 ]
