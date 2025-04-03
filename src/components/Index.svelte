@@ -6,7 +6,7 @@
 	const copy = getContext("copy");
 	// const data = getContext("data");
 
-	import convos from "$data/convos.json";
+	import convos from "$data/conversations.json";
 	import people from "$data/people.json";
 </script>
 
