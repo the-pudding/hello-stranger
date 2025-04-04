@@ -13,9 +13,18 @@
 	let peopleContainer;
 	let peopleState = $state({});
 	let value = $state(0);
+	let sceneSpeed = $state(0);
 	let sortCategory = $state(copy.copy[value].var);
+	let zoomPerson = $state(copy.copy[value].zoomPerson);
+	let personColor = $state(copy.copy[value].personColor);
 
 	let timeRange = [];
+	let zoomContainerData = $state({
+		x: 0,
+		y: 0,
+		scale: 1
+	});
+
 	for (let i = 0; i <= 30; i++) {
 		timeRange.push(i);
 	}
@@ -28,11 +37,45 @@
 		updatePeople();
 	}
 
+	function updateCategory() {
+
+		let newSortCategory = null;
+		let newZoomPerson = null;
+		let newPersonColor = null;
+
+		for (let i = 0; i < copy.copy.length; i++) {
+			const item = copy.copy[i];
+			if (item.time <= value) {
+				newSortCategory = item.var;
+				newZoomPerson = item.zoomPerson;
+				newPersonColor = item.personColor;
+			}
+		}
+
+		newSortCategory = newSortCategory ?? null;
+		newZoomPerson = newZoomPerson ?? null;
+		newPersonColor = newPersonColor ?? null;
+
+		if (newSortCategory !== sortCategory) {
+			sortCategory = newSortCategory;
+		}
+
+		if (newZoomPerson !== zoomPerson) {
+			zoomPerson = newZoomPerson;
+			updateZoom();
+		}
+		if (newPersonColor != personColor) {
+			personColor = newPersonColor;
+		}
+	}
+
+
+
 	function updatePeople() {
 		const innerPadding = Math.max(3, Math.min(10, (w * h) / 400));
 		const outerPadding = {
 			top: 5,
-			right: 30,
+			right: 50,
 			bottom: 5,
 			left: 5
 		};
@@ -86,6 +129,7 @@
 			const y = startY + row * (bestSize + innerPadding);
 
 			updated[key] = {
+				ids: Object.keys(value).slice(0, 2),
 				x,
 				y,
 				w: bestSize * aspectRatio,
@@ -98,6 +142,66 @@
 
 		peopleState = updated;
 	}
+
+	function updateZoom() {
+		let zoomData = null;
+
+		zoomContainerData = {
+			x: 0,
+			y: 0,
+			scale: 1
+		};
+
+		for (const key in peopleState) {
+			const ids = peopleState[key].ids;
+			const index = ids.indexOf(zoomPerson);
+			if (index !== -1) {
+				if (index == 0) {
+					zoomData = {
+						x: peopleState[key].x,
+						y: peopleState[key].y,
+						w: peopleState[key].w,
+						h: peopleState[key].h
+					};
+				} else {
+					zoomData = {
+						x: peopleState[key].x + peopleState[key].w,
+						y: peopleState[key].y,
+						w: peopleState[key].w,
+						h: peopleState[key].h
+					};
+				}
+				break;
+			}
+		}
+
+		if (zoomData != null && peopleContainer) {
+			const scale = 10;
+
+			const targetCenterX = zoomData.x + zoomData.w / 2;
+			const targetCenterY = zoomData.y + zoomData.h / 2;
+
+			const containerCenterX = peopleContainer.clientWidth / 2;
+			const containerCenterY = peopleContainer.clientHeight / 2;
+
+			// After scaling, move the target’s center to the container’s center
+			const offsetX = containerCenterX - targetCenterX * scale;
+			const offsetY = containerCenterY - targetCenterY * scale;
+
+			zoomContainerData = {
+				x: offsetX,
+				y: offsetY,
+				scale
+			};
+
+			// Re-render elements at the new size
+			for (const key in peopleState) {
+				peopleState[key].w *= scale;
+				peopleState[key].h *= scale;
+			}
+		}
+	}
+
 
 
 	function checkCopy(time) {
@@ -117,9 +221,19 @@
 		return "0:" + time;
 	}
 
+	let hasLoaded = $state(false);
 	onMount(() => {
+		if (typeof value !== "number") {
+			value = 0;
+		}
 		updateSize();
+		updateCategory();
 		updatePeople();
+		updateZoom();
+		requestAnimationFrame(() => {
+			hasLoaded = true;
+			sceneSpeed = 3;
+		});
 		window.addEventListener('resize', updateSize);
 		return () => window.removeEventListener('resize', updateSize);
 	});
@@ -128,35 +242,44 @@
 		if (typeof value !== "number") {
 			value = 0;
 		}
-		sortCategory = copy.copy[value]?.var ?? null;
-
+		updateCategory();
 		updatePeople();
 	});
+
 </script>
 <div id="content">
-<section id="scrolly">
+	<section id="scrolly">
 
-	<div class="visualContainer" bind:this={peopleContainer}>
-		{#if Object.keys(peopleState).length}
-		{#each Object.entries(convos) as [key, convo]}
-		<Convo {convo} personState={peopleState[key]} />
-		{/each}
-		{/if}
+		<div class="visualContainer" bind:this={peopleContainer}>
+			<div
+			class="zoomContainer {hasLoaded ? 'loaded' : ''}"
+			style="transform: translate3d({zoomContainerData.x}px, {zoomContainerData.y}px, 0) scale3d({zoomContainerData.scale}, {zoomContainerData.scale}, 1);
+			{hasLoaded ? `transition: transform ${sceneSpeed}s ease-in-out;` : ''}"
+			>
+
+			{#if Object.keys(peopleState).length}
+			{#each Object.entries(convos) as [key, convo]}
+			{@const ids = peopleState[key]?.ids || []}
+			{@const visible = zoomPerson === null || ids.includes(zoomPerson)}
+			<Convo {personColor} {convo} personState={peopleState[key]} {zoomPerson} {visible} p1data={people[ids[0]]} p2data={people[ids[1]]}/>
+			{/each}
+			{/if}
+		</div>
 	</div>
 	<div class="timeline">
 		<Scrolly bind:value top={0}>
 			{#each timeRange as time, i}
-				{@const active = value === i}
-				{#if checkCopy(time) == false}
-					<div class="step time" class:active>
-						{convertTime(time)}
-					</div>
-				{:else}
-					<div class="step {checkCopy(time).addclass ? checkCopy(time).addclass : 'smallText'}" class:active>
-						<div class="time">{convertTime(time)}</div>
-						<Text copy={checkCopy(time).text} time={convertTime(time)} />
-					</div>
-				{/if}
+			{@const active = value === i}
+			{#if checkCopy(time) == false}
+			<div class="step time" class:active>
+				{convertTime(time)}
+			</div>
+			{:else}
+			<div class="step {checkCopy(time).addclass ? checkCopy(time).addclass : 'smallText'}" class:active>
+				<div class="time">{convertTime(time)}</div>
+				<Text copy={checkCopy(time).text} time={convertTime(time)} />
+			</div>
+			{/if}
 			{/each}
 		</Scrolly>
 	</div>
@@ -166,23 +289,35 @@
 	.timeline {
 		position: relative;
 		z-index: 100;
+		pointer-events: none;
 	}
 	.step {
-		height: auto;
-		margin: 80vh auto;
+		height: 120vh;
+		margin: 0vh auto;
 		text-align: center;
+		border-top:1px solid red;
+		pointer-events: none;
 	}
 	.step:last-child {
 		padding-bottom: 80px;
 		margin-bottom: 0px;
 	}
 	.time {
-		height: 20px;
 		width: calc(100% - 5px);
 		text-align: right;
 		margin-right: 5px;
 	}
 	.step p {
 		padding: 1rem;
+	}
+	.zoomContainer {
+		width: 100%;
+		height: 100vh;
+		transform-origin: top left;
+		backface-visibility: hidden;
+		perspective: 1000px;
+	}
+	.zoomContainer.loaded {
+		transition: transform var(--speed, 3s) ease-in-out;
 	}
 </style>

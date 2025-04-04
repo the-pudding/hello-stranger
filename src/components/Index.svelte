@@ -6,7 +6,14 @@
 	const copy = getContext("copy");
 	// const data = getContext("data");
 
-	import convos from "$data/conversations.json";
+	import convosJson from "$data/conversations.json";
+
+	const entries = Object.entries(convosJson);
+	const filteredEntries = entries.filter((_, i) => i % 2 === 0);
+	const newConvos = Object.fromEntries(filteredEntries);
+
+	// Reassign to convos
+	let convos = newConvos;
 	import people from "$data/people.json";
 </script>
 
