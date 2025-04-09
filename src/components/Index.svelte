@@ -9,7 +9,8 @@
 	import convosJson from "$data/conversations.json";
 
 	const entries = Object.entries(convosJson);
-	const filteredEntries = entries.filter((_, i) => i % 2 === 0);
+	// const filteredEntries = entries.filter((_, i) => i % 2 === 0);
+	const filteredEntries = entries;
 	const newConvos = Object.fromEntries(filteredEntries);
 
 	// Reassign to convos
