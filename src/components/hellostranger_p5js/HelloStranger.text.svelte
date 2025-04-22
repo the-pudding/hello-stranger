@@ -102,5 +102,16 @@
 </div>
 
 <style>
-
+	.textContainer {
+		width: 400px;
+		background: #000;
+		color: #DFD2DE;
+		margin: 0px auto;
+		padding: 5px;
+		text-align: left;
+	}
+	.time {
+		font-size: 12px;
+		opacity: 0.5;
+	}
 </style>

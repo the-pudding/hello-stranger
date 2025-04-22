@@ -1,5 +1,4 @@
 <script>
-    import Person from "$components/hellostranger/HelloStranger.person.svelte";
     import colors from "$data/colors.json";
     
     let { 
@@ -100,12 +99,11 @@
     );
     
     // Precompute scale values for transforms rather than changing heights
-
     let p1Scale = $derived(affectColumns.includes(personColor) ? 
         `scaleY(${(p1[personColor] || 0) / 10})` : 
         "scaleY(1)"
     );
-
+    
     let p2Scale = $derived(affectColumns.includes(personColor) ? 
         `scaleY(${(p2[personColor] || 0) / 10})` : 
         "scaleY(1)"
@@ -159,35 +157,87 @@
 </script>
 
 {#if shouldRender}
-    <Person
-        personKey={p1Key}
-        personData={p1}
-        convoState={convoState}
-        personState={p1state}
-        sortMode={sortMode}
-        personColor={personColor}
-        backgroundColor={p1BackgroundColor}
-        transform={p1Transform}
-        scale={p1Scale}
-        selected={isP1Selected}
-        visible={visible}
-        data={p1data}
-        onClick={() => handlePersonClick(p1Key, 0)}
-    />
+<div
+class="person p1"
+class:fadeOut={!visible}
+class:selected={isP1Selected}
+style="
+height: {convoState.h}px;
+width: {convoState.w / 2}px;
+transform: {p1Transform};
+"
+on:click={() => handlePersonClick(p1Key, 0)}
+>
+    <div class="backgroundColor" 
+    style:background={p1BackgroundColor}
+    style:transform={p1Scale}
+    ></div>
+</div>
 
-    <Person
-        personKey={p2Key}
-        personData={p2}
-        convoState={convoState}
-        personState={p2state}
-        sortMode={sortMode}
-        personColor={personColor}
-        backgroundColor={p2BackgroundColor}
-        transform={p2Transform}
-        scale={p2Scale}
-        selected={isP2Selected}
-        visible={visible}
-        data={p2data}
-        onClick={() => handlePersonClick(p2Key, 1)}
-    />
+<div
+class="person p2"
+class:fadeOut={!visible}
+class:selected={isP2Selected}
+style="
+height: {convoState.h}px;
+width: {convoState.w / 2}px;
+transform: {p2Transform};
+"
+on:click={() => handlePersonClick(p2Key, 1)}
+>
+    <div class="backgroundColor" 
+    style:background={p2BackgroundColor}
+    style:transform={p2Scale}
+    ></div>
+</div>
 {/if}
+
+<style>
+    .person {
+        background: #000;
+        display: block;
+        position: absolute;
+        transform-origin: top left;
+        border: 1px solid #000;
+        font-size: 2px;
+        color: white;
+        opacity: 1;
+        transition: transform 2000ms cubic-bezier(0.420, 0.000, 0.580, 1.000), opacity 0.5s ease-in-out;
+        cursor: pointer;
+        /* Hardware acceleration optimizations */
+        will-change: transform, opacity;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+    }
+    
+    .person.selected {
+        z-index: 10;
+        border: 3px solid #ff6600; /* Bright orange border */
+        box-shadow: 0 0 10px rgba(255, 102, 0, 0.7); /* Optional glow effect */
+    }
+    
+    .backgroundColor {
+        position: absolute;
+        left: 0px;
+        bottom: 0px;
+        width: 100%;
+        height: 100%;
+        transform-origin: bottom;
+        transition: transform 1.5s ease-in-out, background 1.5s ease-in-out;
+        will-change: transform, background;
+    }
+    
+    .fadeOut {
+        opacity: 0;
+        pointer-events: none;
+    }
+    
+    /* Minimize repaints and reflows when elements change state */
+    .person:not(.fadeOut):hover {
+        z-index: 5;
+        filter: brightness(1.2);
+        transition: transform 1000ms cubic-bezier(0.420, 0.000, 0.580, 1.000), 
+                  opacity 0.5s ease-in-out, 
+                  filter 0.3s ease;
+    }
+</style>
