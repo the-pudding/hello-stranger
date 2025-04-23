@@ -17,7 +17,8 @@
         convoId,
         onQuoteSelect,
         selectedPersonId,
-        selectedConvoId
+        selectedConvoId,
+        zoomPerson
     } = $props();
     
     // Add null/undefined check for convo

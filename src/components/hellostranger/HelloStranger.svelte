@@ -6,9 +6,9 @@
 	import { onMount } from "svelte";
 	import quotes from "$data/nearest_quote.json";
 	let { convos, people, copy } = $props();
-	let filteredConvos;
-	let w = $state(40);
-	let h = $state(40);
+	let filteredConvos = $state({}); // Initialize as an empty object
+	let w = $state(60);  // Fixed width
+	let h = $state(60);  // Fixed height
 	let grouped = $state([]);
 	let totalConvos = Object.keys(convos).length;
 	let chartWidth = $state(0);
@@ -42,53 +42,65 @@
 	// Add a debounced resize handler instead of an effect
 	let resizeTimeout;
 	function debouncedResize() {
-		// Clear any existing timeout
-		if (resizeTimeout) {
-			clearTimeout(resizeTimeout);
-		}
-		
-		// Set a new timeout to execute after 100ms of no resize events
-		resizeTimeout = setTimeout(() => {
-			if (chartWidth > 0 && chartHeight > 0 && hasLoaded) {
-				filterConvos();
-				updateConvos();
-				updatePeople();
-				
-				if (zoomPerson) {
-					updateZoom();
-				}
-			}
-		}, 100);
+	    // Clear any existing timeout
+	    if (resizeTimeout) {
+	        clearTimeout(resizeTimeout);
+	    }
+	    
+	    // Set a new timeout to execute after 100ms of no resize events
+	    resizeTimeout = setTimeout(() => {
+	        if (chartWidth > 0 && chartHeight > 0 && hasLoaded) {
+	            // Recalculate the number of items to display based on new dimensions
+	            filterConvos();
+	            updateConvos();
+	            updatePeople();
+	            
+	            if (zoomPerson) {
+	                updateZoom();
+	            }
+	        }
+	    }, 100);
 	}
 
 	function filterConvos() {
-		const entries = Object.entries(convos);
-		w = chartWidth * chartHeight / 2000;
-		h = chartWidth * chartHeight / 2000;
-		totalConvos = Math.round(chartWidth * chartHeight / 5000); 
-  		// Take the first totalConvos entries
-		const whittledEntries = entries.slice(0, totalConvos);
-
-  		// Convert back to an object
-		filteredConvos = Object.fromEntries(whittledEntries);
+		// This function now primarily updates w and h values 
+		// The actual filtering happens in updateConvos based on fixed cell size
+		
+		// Set w and h to your fixed values
+		w = 60;  // Fixed width
+		h = 60;  // Fixed height
+		
+		// Return true to indicate that we should proceed with updates
+		return true;
 	}
 
-	// Update the updateSize function to use the debounced handler
 	function updateSize() {
 		if (peopleContainer) {
-			// Only trigger updates if dimensions actually changed
 			const newWidth = peopleContainer.clientWidth;
 			const newHeight = peopleContainer.clientHeight;
 			
 			if (newWidth !== chartWidth || newHeight !== chartHeight) {
 				chartWidth = newWidth;
 				chartHeight = newHeight;
-				debouncedResize();
+				
+				// Force immediate recalculation
+				filterConvos(); // This now just updates w and h values
+				
+				// Completely reset states to force re-rendering
+				convoState = {};
+				peopleState = {};
+				
+				// Then rebuild - update the people first, then convos
+				setTimeout(() => {
+					updateConvos(); // This now filters based on fixed size
+					updatePeople();
+					if (zoomPerson) updateZoom();
+				}, 0);
 			}
 		}
 	}
 
-	// Modify the updateCategory function to call updatePeople before updateZoom
+	// Modify the updateCategory function
 	function updateCategory() {
 		const latestItem = [...copy.copy].reverse().find(item => item.time <= value);
 
@@ -102,8 +114,8 @@
 		if (newPersonColor !== personColor) personColor = newPersonColor;
 		if (newSortMode !== sortMode) sortMode = newSortMode;
 
-	    // Run updatePeople to ensure positions are updated before zooming
-		updatePeople();
+	    // We don't need to call updatePeople here as it's now called after updateConvos
+	    // in the effect that watches value changes
 
 	    // Only update zoom if person changes
 		if (newZoomPerson !== zoomPerson) {
@@ -113,184 +125,212 @@
 	}
 
 	function updateConvos() {
-		let innerPadding = Math.max(3, Math.min(10, (w * h) / 400));
+		// Fixed size for each convo cell
+		const fixedHeight = 60; // Fixed height
+		const fixedWidth = fixedHeight * 2; // Width is double the height (aspect ratio of 2)
+		
+		// Make inner padding responsive to available space
+		let innerPadding = Math.max(3, Math.min(10, (chartWidth * chartHeight) / 40000));
+		
+		// Reduce outer padding to utilize more space
 		const outerPadding = {
-			top: 10,
+			top: 5,
 			right: 50,
-			bottom: 10,
-			left: 10
+			bottom: 5,
+			left: 5
 		};
-	    const aspectRatio = 2; // Width is double the height
+		
+		// Sort convos by sortCategory
+		let sortedConvos = Object.entries(convos).sort((a, b) => {
+			// Check if sortCategory exists in the object first
+			const aVal = a[1][sortCategory] !== undefined ? a[1][sortCategory] : '';
+			const bVal = b[1][sortCategory] !== undefined ? b[1][sortCategory] : '';
 
-	    // Sort convos by sortCategory
-	    let sortedConvos = Object.entries(filteredConvos).sort((a, b) => {
-	    	const aVal = a[1][sortCategory];
-	    	const bVal = b[1][sortCategory];
+			// Handle different data types appropriately
+			if (typeof aVal === 'string' && typeof bVal === 'string') {
+				return aVal.localeCompare(bVal);
+			} else {
+				// For numbers or other comparable types
+				if (aVal < bVal) return -1;
+				if (aVal > bVal) return 1;
+				return 0;
+			}
+		});
+		
+		// Calculate how many cells we can fit with the fixed size
+		const availableWidth = chartWidth - outerPadding.left - outerPadding.right;
+		const availableHeight = chartHeight - outerPadding.top - outerPadding.bottom;
+		
+		// Number of columns that can fit
+		const maxCols = Math.floor((availableWidth + innerPadding) / (fixedWidth + innerPadding));
+		
+		// Number of rows that can fit
+		const maxRows = Math.floor((availableHeight + innerPadding) / (fixedHeight + innerPadding));
+		
+		// Total number of cells that can fit
+		const maxCells = maxCols * maxRows;
+		
+		// Limit the number of convos to display
+		const displayCount = Math.min(sortedConvos.length, maxCells);
+		
+		// Update totalConvos for other functions that might use this value
+		totalConvos = displayCount;
+		
+		// Limit the sorted convos to just those we'll display
+		sortedConvos = sortedConvos.slice(0, displayCount);
+		
+		// Create filteredConvos from the sorted and limited entries
+		filteredConvos = Object.fromEntries(sortedConvos);
+		
+		// Calculate grid dimensions
+		const totalGridWidth = maxCols * fixedWidth + innerPadding * (maxCols - 1);
+		const actualRows = Math.ceil(displayCount / maxCols);
+		const totalGridHeight = actualRows * fixedHeight + innerPadding * (actualRows - 1);
+		
+		// Calculate starting position to center the grid
+		const startX = outerPadding.left + (availableWidth - totalGridWidth) / 2;
+		const startY = outerPadding.top + (availableHeight - totalGridHeight) / 2;
+		
+		// Setup convoState grid
+		let updated = {};
+		let index = 0;
+		
+		for (const [key, value] of sortedConvos) {
+			const col = index % maxCols;
+			const row = Math.floor(index / maxCols);
 
-	    	if (aVal < bVal) return -1;
-	    	if (aVal > bVal) return 1;
-	    	return 0;
-	    });
+			const x = startX + col * (fixedWidth + innerPadding);
+			const y = startY + row * (fixedHeight + innerPadding);
 
-	    let bestCols = 1;
-	    let bestRows = totalConvos;
-	    let bestSize = 0;
+			updated[key] = {
+				ids: Object.keys(value).slice(0, 2),
+				x,
+				y,
+				w: fixedWidth,
+				h: fixedHeight,
+				speed: value === 0 ? [0, 0] : [Math.random() * 2000 + 2000, Math.random() * 2000 + 2000]
+			};
 
-	     // Calculate best grid layout
-	    for (let cols = 1; cols <= totalConvos; cols++) {
-	    	const rows = Math.ceil(totalConvos / cols);
-	    	const totalInnerWidth = innerPadding * (cols - 1);
-	    	const totalInnerHeight = innerPadding * (rows - 1);
+			index++;
+		}
 
-	    	const maxHeight = (chartHeight - outerPadding.top - outerPadding.bottom - totalInnerHeight) / rows;
-	    	const maxWidth = (chartWidth - outerPadding.left - outerPadding.right - totalInnerWidth) / (cols * aspectRatio);
-
-	    	const size = Math.floor(Math.min(maxHeight, maxWidth));
-
-	    	if (size > bestSize) {
-	    		bestSize = size;
-	    		bestCols = cols;
-	    		bestRows = rows;
-	    	}
-	    }
-	    
-	    const totalGridWidth = bestCols * (bestSize * aspectRatio) + innerPadding * (bestCols - 1);
-	    const totalGridHeight = bestRows * bestSize + innerPadding * (bestRows - 1);
-
-	    const startX = outerPadding.left + (chartWidth - outerPadding.left - outerPadding.right - totalGridWidth) / 2;
-	    const startY = outerPadding.top + (chartHeight - outerPadding.top - outerPadding.bottom - totalGridHeight) / 2;
-
-	    // Setup convoState grid
-	    let updated = {};
-	    let index = 0;
-
-	    for (const [key, value] of sortedConvos) {
-	    	const col = index % bestCols;
-	    	const row = Math.floor(index / bestCols);
-
-	    	const x = startX + col * (bestSize * aspectRatio + innerPadding);
-	    	const y = startY + row * (bestSize + innerPadding);
-
-	    	updated[key] = {
-	    		ids: Object.keys(value).slice(0, 2),
-	    		x,
-	    		y,
-	    		w: bestSize * aspectRatio,
-	    		h: bestSize,
-	    		speed: value === 0 ? [0, 0] : [Math.random() * 2000 + 2000, Math.random() * 2000 + 2000]
-	    	};
-
-	    	index++;
-	    }
-
-	    convoState = updated;
+		convoState = updated;
 	}
 
-
 	function updatePeople() {
-	    let innerPadding = Math.max(3, Math.min(10, (w * h) / 400));
-	    const outerPadding = {
-	        top: 5,
-	        right: 50,
-	        bottom: 20,
-	        left: 5
-	    };
-	    const aspectRatio = 1; // Square aspect ratio for people
-	    
-	    // Reset peopleState to prepare for grid layout
-	    peopleState = {}; 
-	    
-	    // Step 1: Get all unique keys from the objects inside filteredPeople
-	    const uniqueKeys = new Set();
+		// Fixed size for each person cell
+		const fixedWidth = 60;  // Fixed width
+		const fixedHeight = 60; // Fixed height
+		const aspectRatio = fixedWidth / fixedHeight;
+		
+		// Make inner padding responsive to available space
+		let innerPadding = Math.max(2, Math.min(8, (chartWidth * chartHeight) / 50000));
+		
+		// Reduce outer padding to utilize more space
+		const outerPadding = {
+			top: 3,
+			right: 50,
+			bottom: 10,
+			left: 3
+		};
+		
+		// Reset peopleState to prepare for grid layout
+		peopleState = {}; 
+		
+		// Step 1: Get all unique keys from the objects inside filteredConvos
+		const uniqueKeys = new Set();
 
-	    Object.values(filteredConvos).forEach(person => {
-	        Object.keys(person).forEach(key => {
-	            if (typeof person[key] === "object" && !uniqueKeys.has(key) && key[0] == "5") {
-	                uniqueKeys.add(key);    
-	            }
-	        });
-	    });
-	    
-	    // Step 2: Filter the people object to keep only entries 
-	    // where all keys from uniqueKeys exist
-	    let result = {};
-	    uniqueKeys.forEach(item => {
-	        result[item] = people[item];
-	    });
+		// Check if filteredConvos exists and has values before trying to iterate
+		if (filteredConvos && Object.keys(filteredConvos).length > 0) {
+			Object.values(filteredConvos).forEach(person => {
+				if (person) { // Add additional check to ensure person is defined
+					Object.keys(person).forEach(key => {
+						if (typeof person[key] === "object" && !uniqueKeys.has(key) && key[0] == "5") {
+							uniqueKeys.add(key);    
+						}
+					});
+				}
+			});
+		}
+		
+		// Step 2: Filter the people object to keep only entries 
+		// where all keys from uniqueKeys exist
+		let result = {};
+		uniqueKeys.forEach(item => {
+			result[item] = people[item];
+		});
 
-	    let filteredPeople = result;
-	    
-	    // Sort people by sortCategory
-	    let sortedPeopleEntries = Object.entries(filteredPeople).sort((a, b) => {
-	        const aVal = a[sortCategory];
-	        const bVal = b[sortCategory];
-	        
-	        if (aVal < bVal) return -1;
-	        if (aVal > bVal) return 1;
-	        return 0;
-	    });
-	    
-	    // Get the total number of people for grid calculation
-	    const totalPeople = sortedPeopleEntries.length;
-	    
-	    // Calculate best grid layout
-	    let bestCols = 1;
-	    let bestRows = totalPeople;
-	    let bestSize = 0;
-	    
-	    // Try different column arrangements to find the best fit
-	    for (let cols = 1; cols <= totalPeople; cols++) {
-	        const rows = Math.ceil(totalPeople / cols);
-	        const totalInnerWidth = innerPadding * (cols - 1);
-	        const totalInnerHeight = innerPadding * (rows - 1);
-	        
-	        const maxHeight = (chartHeight - outerPadding.top - outerPadding.bottom - totalInnerHeight) / rows;
-	        const maxWidth = (chartWidth - outerPadding.left - outerPadding.right - totalInnerWidth) / (cols * aspectRatio);
-	        
-	        const size = Math.floor(Math.min(maxHeight, maxWidth));
-	        
-	        if (size > bestSize) {
-	            bestSize = size;
-	            bestCols = cols;
-	            bestRows = rows;
-	        }
-	    }
-	    
-	    // Calculate grid dimensions
-	    const totalGridWidth = bestCols * (bestSize * aspectRatio) + innerPadding * (bestCols - 1);
-	    const totalGridHeight = bestRows * bestSize + innerPadding * (bestRows - 1);
-	    
-	    // Calculate starting position to center the grid
-	    const startX = outerPadding.left + (chartWidth - outerPadding.left - outerPadding.right - totalGridWidth) / 2;
-	    const startY = outerPadding.top + (chartHeight - outerPadding.top - outerPadding.bottom - totalGridHeight) / 2;
-	    
-	    // Use a consistent inner padding for people
-	    innerPadding = 5;
-	    
-	    // Create grid layout for people
-	    let updatedPeople = {};
-	    let peopleIndex = 0;
-	    
-	    // Position each person in the grid
-	    for (const [personId, personData] of sortedPeopleEntries) {
-	        const col = peopleIndex % bestCols;
-	        const row = Math.floor(peopleIndex / bestCols);
-	        
-	        const x = startX + col * (bestSize * aspectRatio + innerPadding);
-	        const y = startY + row * (bestSize + innerPadding);
-	        
-	        updatedPeople[personId] = {
-	            x,
-	            y,
-	            w: bestSize * aspectRatio,
-	            h: bestSize,
-	            speed: [Math.random() * 2000 + 2000, Math.random() * 2000 + 2000]
-	        };
-	        
-	        peopleIndex++;
-	    }
-	    
-	    peopleState = updatedPeople;
+		let filteredPeople = result;
+		
+		// Fix: Properly sort people by sortCategory
+		let sortedPeopleEntries = Object.entries(filteredPeople).sort((a, b) => {
+			// Get the values, make sure they exist and have the sortCategory property
+			const aVal = a[1] && a[1][sortCategory] !== undefined ? a[1][sortCategory] : '';
+			const bVal = b[1] && b[1][sortCategory] !== undefined ? b[1][sortCategory] : '';
+
+			// Handle different data types appropriately
+			if (typeof aVal === 'string' && typeof bVal === 'string') {
+				return aVal.localeCompare(bVal);
+			} else {
+				// For numbers or other comparable types
+				if (aVal < bVal) return -1;
+				if (aVal > bVal) return 1;
+				return 0;
+			}
+		});
+		
+		// Calculate how many cells we can fit with the fixed size
+		const availableWidth = chartWidth - outerPadding.left - outerPadding.right;
+		const availableHeight = chartHeight - outerPadding.top - outerPadding.bottom;
+		
+		// Number of columns that can fit
+		const maxCols = Math.floor((availableWidth + innerPadding) / (fixedWidth + innerPadding));
+		
+		// Number of rows that can fit
+		const maxRows = Math.floor((availableHeight + innerPadding) / (fixedHeight + innerPadding));
+		
+		// Total number of cells that can fit
+		const maxCells = maxCols * maxRows;
+		
+		// Limit the number of people to display
+		const displayCount = Math.min(sortedPeopleEntries.length, maxCells);
+		
+		// Limit the sorted people entries to just those we'll display
+		sortedPeopleEntries = sortedPeopleEntries.slice(0, displayCount);
+		
+		// Calculate grid dimensions
+		const totalGridWidth = maxCols * fixedWidth + innerPadding * (maxCols - 1);
+		const actualRows = Math.ceil(displayCount / maxCols);
+		const totalGridHeight = actualRows * fixedHeight + innerPadding * (actualRows - 1);
+		
+		// Calculate starting position to center the grid
+		const startX = outerPadding.left + (availableWidth - totalGridWidth) / 2;
+		const startY = outerPadding.top + (availableHeight - totalGridHeight) / 2;
+		
+		// Create grid layout for people
+		let updatedPeople = {};
+		let peopleIndex = 0;
+		
+		// Position each person in the grid
+		for (const [personId, personData] of sortedPeopleEntries) {
+			const col = peopleIndex % maxCols;
+			const row = Math.floor(peopleIndex / maxCols);
+
+			const x = startX + col * (fixedWidth + innerPadding);
+			const y = startY + row * (fixedHeight + innerPadding);
+
+			updatedPeople[personId] = {
+				x,
+				y,
+				w: fixedWidth,
+				h: fixedHeight,
+				speed: [Math.random() * 2000 + 2000, Math.random() * 2000 + 2000]
+			};
+
+			peopleIndex++;
+		}
+		
+		peopleState = updatedPeople;
 	}
 
 	function countUniqueInnerKeys(objectOfObjects) {
@@ -318,31 +358,24 @@
 			scale: 1
 		};
 
-		for (const key in convoState) {
-			const ids = convoState[key].ids;
-			const index = ids.indexOf(zoomPerson);
-			if (index !== -1) {
-				if (index == 0) {
-					zoomData = {
-						x: convoState[key].x,
-						y: convoState[key].y,
-						w: convoState[key].w,
-						h: convoState[key].h
-					};
-				} else {
-					zoomData = {
-						x: convoState[key].x + convoState[key].w,
-						y: convoState[key].y,
-						w: convoState[key].w,
-						h: convoState[key].h
-					};
-				}
-				break;
-			}
+		if (sortMode == "person" && zoomPerson) {
+			zoomData = {
+				x: peopleState[zoomPerson].x,
+				y: peopleState[zoomPerson].y,
+				w: peopleState[zoomPerson].w,
+				h: peopleState[zoomPerson].h
+			};
+		} else if (zoomPerson) {
+			zoomData = {
+				x: convoState[zoomPerson].x,
+				y: convoState[zoomPerson].y,
+				w: convoState[zoomPerson].w,
+				h: convoState[zoomPerson].h
+			};
 		}
 
 		if (zoomData != null && peopleContainer) {
-			const scale = 10;
+			const scale = 5;
 
 			const targetCenterX = zoomData.x + zoomData.w / 2;
 			const targetCenterY = zoomData.y + zoomData.h / 2;
@@ -410,11 +443,14 @@
 				chartWidth = peopleContainer.clientWidth;
 				chartHeight = peopleContainer.clientHeight;
 				
-				// Initial setup - do these directly instead of using the debounced function
+				// Initial setup - make sure we have proper order of operations
+				// First filter and create the filteredConvos
 				filterConvos();
-				updateCategory(); // Set category before other updates
 				updateConvos();
+				// Then update people using the filtered convos
 				updatePeople();
+				// Finally set category and handle zoom if needed
+				updateCategory();
 				
 				if (zoomPerson) {
 					updateZoom();
@@ -460,6 +496,22 @@
 		}
 	});
 
+	$effect(() => {
+	    // Track window size changes for responsive updates
+	    const checkSize = () => {
+	        updateSize();
+	    };
+	    
+	    if (typeof window !== 'undefined') {
+	        window.addEventListener('resize', checkSize);
+	        
+	        // Ensure initial size is set
+	        setTimeout(checkSize, 100);
+	        
+	        return () => window.removeEventListener('resize', checkSize);
+	    }
+	});
+
 </script>
 <div id="content">
 	<section id="scrolly">
@@ -474,7 +526,7 @@
 			{#if Object.keys(convoState).length}
 			{#each Object.entries(filteredConvos) as [key, convo]}
 			{@const ids = convoState[key]?.ids || []}
-			{@const visible = zoomPerson === null || ids.includes(zoomPerson)}
+			{@const visible = zoomPerson === null || (sortMode == "person" && ids.includes(zoomPerson)) || (sortMode != "person" && key == zoomPerson)}
 			<Convo 
 			convoId={key} 
 			{sortMode} 
