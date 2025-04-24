@@ -4,6 +4,7 @@
 	import Panel from "$components/hellostranger/HelloStranger.panel.svelte";
 	import Scrolly from "$components/helpers/Scrolly.svelte";
 	import { onMount } from "svelte";
+	import { fade } from 'svelte/transition';;
 	import quotes from "$data/nearest_quote.json";
 	let { convos, people, copy } = $props();
 	let filteredConvos = $state({}); // Initialize as an empty object
@@ -29,13 +30,14 @@
 	let selectedConvoId = $state(null);
 
 	let timeRange = [];
+	const tickNums = 60;
 	let zoomContainerData = $state({
 		x: 0,
 		y: 0,
 		scale: 1
 	});
 
-	for (let i = 0; i <= 30; i++) {
+	for (let i = 0; i <= 30 * tickNums; i++) {
 		timeRange.push(i);
 	}
 
@@ -43,23 +45,23 @@
 	let resizeTimeout;
 	function debouncedResize() {
 	    // Clear any existing timeout
-	    if (resizeTimeout) {
-	        clearTimeout(resizeTimeout);
-	    }
-	    
+		if (resizeTimeout) {
+			clearTimeout(resizeTimeout);
+		}
+
 	    // Set a new timeout to execute after 100ms of no resize events
-	    resizeTimeout = setTimeout(() => {
-	        if (chartWidth > 0 && chartHeight > 0 && hasLoaded) {
+		resizeTimeout = setTimeout(() => {
+			if (chartWidth > 0 && chartHeight > 0 && hasLoaded) {
 	            // Recalculate the number of items to display based on new dimensions
-	            filterConvos();
-	            updateConvos();
-	            updatePeople();
-	            
-	            if (zoomPerson) {
-	                updateZoom();
-	            }
-	        }
-	    }, 100);
+				filterConvos();
+				updateConvos();
+				updatePeople();
+
+				if (zoomPerson) {
+					updateZoom();
+				}
+			}
+		}, 100);
 	}
 
 	function filterConvos() {
@@ -75,29 +77,25 @@
 	}
 
 	function updateSize() {
-		if (peopleContainer) {
-			const newWidth = peopleContainer.clientWidth;
-			const newHeight = peopleContainer.clientHeight;
-			
-			if (newWidth !== chartWidth || newHeight !== chartHeight) {
-				chartWidth = newWidth;
-				chartHeight = newHeight;
-				
-				// Force immediate recalculation
-				filterConvos(); // This now just updates w and h values
-				
-				// Completely reset states to force re-rendering
-				convoState = {};
-				peopleState = {};
-				
-				// Then rebuild - update the people first, then convos
-				setTimeout(() => {
-					updateConvos(); // This now filters based on fixed size
-					updatePeople();
-					if (zoomPerson) updateZoom();
-				}, 0);
-			}
-		}
+	  if (peopleContainer) {
+	    const newWidth = peopleContainer.clientWidth;
+	    const newHeight = peopleContainer.clientHeight;
+	    
+	    if (newWidth !== chartWidth || newHeight !== chartHeight) {
+	      chartWidth = newWidth;
+	      chartHeight = newHeight;
+	      
+	      // Force immediate recalculation
+	      filterConvos();
+	      
+	      // Use requestAnimationFrame for better performance
+	      requestAnimationFrame(() => {
+	        updateConvos();
+	        updatePeople();
+	        if (zoomPerson) updateZoom();
+	      });
+	    }
+	  }
 	}
 
 	// Modify the updateCategory function
@@ -375,7 +373,7 @@
 		}
 
 		if (zoomData != null && peopleContainer) {
-			const scale = 5;
+			const scale = 1.5;
 
 			const targetCenterX = zoomData.x + zoomData.w / 2;
 			const targetCenterY = zoomData.y + zoomData.h / 2;
@@ -423,10 +421,16 @@
 	}
 
 	function convertTime(time) {
-		if (time < 10) {
-			return "0:0" + time;
-		}
-		return "0:" + time;
+	  // Calculate minutes and seconds
+	  const minutes = Math.floor(time / 60);
+	  const seconds = Math.floor(time % 60);
+	  
+	  // Format minutes and seconds without padStart
+	  const formattedMinutes = minutes < 10 ? "0" + minutes : minutes;
+	  const formattedSeconds = seconds < 10 ? "0" + seconds : seconds;
+	  
+	  // Return in MM:SS format
+	  return formattedMinutes + ":" + formattedSeconds;
 	}
 
 	let hasLoaded = $state(false);
@@ -470,49 +474,68 @@
 	});
 
 	// Only run when value changes
-	$effect(() => {
-		if (typeof value !== "number") {
-			value = 0;
-		}
+		$effect(() => {
+			if (typeof value !== "number") {
+				value = 0;
+			}
 
-	  // Set sceneSpeed to 0 when value is 0
-		if (value === 0) {
-			sceneSpeed = 0;
-		} else if (hasLoaded) {
-	    // Only reset to normal speed if we're not at the beginning
-			sceneSpeed = 3;
-		}
+		  // Set sceneSpeed to 0 when value is 0
+			if (value === 0) {
+				sceneSpeed = 0;
+			} else if (hasLoaded) {
+		    // Only reset to normal speed if we're not at the beginning
+				sceneSpeed = 3;
+			}
 
-		updateCategory();
-	});
+			updateCategory();
+		});
 
-	// Separate effect for updatePeople to avoid chain reactions
-	$effect(() => {
-		if (hasLoaded && value != newValue) {
-			updatePeople();
-			updateConvos();
-			newValue = value;
-			closeQuotePanel();
-		}
+		// Separate effect for updatePeople to avoid chain reactions
+		$effect(() => {
+	  if (hasLoaded) {
+	    // Immediately check value type and set if needed
+	    if (typeof value !== "number") {
+	      value = 0;
+	    }
+	    
+	    // Update scene speed first (affects animation transition)
+	    sceneSpeed = value === 0 ? 0 : 3;
+	    
+	    // Update categorical data
+	    updateCategory();
+	    
+	    // Use requestAnimationFrame to batch visual updates
+	    // This prevents multiple reflows and repaints
+	    requestAnimationFrame(() => {
+	      updateConvos();
+	      updatePeople();
+	      
+	      // Only close panel if needed
+	      if (quoteState[0] !== null) {
+	        closeQuotePanel();
+	      }
+	    });
+	  }
 	});
 
 	$effect(() => {
 	    // Track window size changes for responsive updates
-	    const checkSize = () => {
-	        updateSize();
-	    };
-	    
-	    if (typeof window !== 'undefined') {
-	        window.addEventListener('resize', checkSize);
-	        
+		const checkSize = () => {
+			updateSize();
+		};
+
+		if (typeof window !== 'undefined') {
+			window.addEventListener('resize', checkSize);
+
 	        // Ensure initial size is set
-	        setTimeout(checkSize, 100);
-	        
-	        return () => window.removeEventListener('resize', checkSize);
-	    }
+			setTimeout(checkSize, 100);
+
+			return () => window.removeEventListener('resize', checkSize);
+		}
 	});
 
 </script>
+<div class="debug">{value}</div>
 <div id="content">
 	<section id="scrolly">
 
@@ -548,12 +571,20 @@
 			{/each}
 			{/if}
 		</div>
+		{#if value == 0}
+		<div class="headline" transition:fade>
+			<h1>hello, stranger</h1>
+			<div class="byline">by <a href="https://pudding.cool/author/alvin-chang/">alvin chang</a></div>
+		</div>
+		{/if}
 	</div>
+	
 	<div class="timeline">
-		<Scrolly bind:value top={0}>
+		<Scrolly bind:value top={250}>
 			{#each timeRange as time, i}
 			{@const active = value === i}
 			{#if checkCopy(time) == false}
+
 			<div class="step time" class:active>
 				{convertTime(time)}
 			</div>
@@ -580,68 +611,92 @@
 </section>
 </div>
 <style>
+	.debug {
+		position: fixed;
+		left:  0;
+		top: 0;
+	}
+	.headline {
+		color: black;
+		position: absolute;
+		bottom: 70%;
+		text-align: center;
+		left: 0%;
+		width: 100%;
+	}
+	.headline h1 {
+		font-size: 17px;
+	}
 	.timeline {
 		position: relative;
 		z-index: 100;
 		pointer-events: none;
 	}
 	.step {
-		height: auto;
-		padding: 60vh 0;
+		height: 20px;
+		padding: 0;
 		margin: 0vh auto;
 		text-align: center;
-/* 		border-top:1px solid red; */
-pointer-events: none;
-}
-.step:last-child {
-	padding-bottom: 80px;
-	margin-bottom: 0px;
-}
-.time {
-	width: calc(100% - 5px);
-	text-align: right;
-	margin-right: 5px;
-}
-.step p {
-	padding: 1rem;
-}
-.zoomContainer {
-	width: 100%;
-	height: 100vh;
-	transform-origin: top left;
-	backface-visibility: hidden;
-	perspective: 1000px;
-}
-.zoomContainer.loaded {
-	transition: transform var(--speed, 3s) ease-in-out;
-}
-.quotePanel {
-	position: fixed;
-	left: -300px;
-	top: 0px;
-	height: 100vh;
-	font-size: 13px;
-	padding: 20px;
-	width: 300px;
-	background: black;
-	color: white;
-	transition: all 200ms cubic-bezier(0.250, 0.100, 0.250, 1.000);
-	transition-timing-function: cubic-bezier(0.250, 0.100, 0.250, 1.000);
-	overflow: scroll;
-}
-.quotePanel.shown {
-	left: 0px;
-}
-.quotePanel .p2 {
-	color: #aaa;
-}
-.close {
-	width: 100%;
-	padding: 5px;
-	background: purple;
-	color:  white;
-	font-weight: bold;
-	text-align: center;
-	cursor: pointer;
-}
+		pointer-events: none;
+	}
+	.step.active {
+		font-weight: bold;
+		font-size: 15px;
+	}
+	.step:last-child {
+		padding-bottom: 80px;
+		margin-bottom: 0px;
+	}
+	.step.tick {
+		padding: 0;
+		text-align: right;
+		width: 100%;
+	}
+	.time {
+		width: calc(100% - 5px);
+		text-align: right;
+		margin-right: 5px;
+	}
+	.step p {
+		padding: 1rem;
+	}
+	.zoomContainer {
+		width: 100%;
+		height: 100vh;
+		transform-origin: top left;
+		backface-visibility: hidden;
+		perspective: 1000px;
+	}
+	.zoomContainer.loaded {
+		transition: transform var(--speed, 3s) ease-in-out;
+	}
+	.quotePanel {
+		position: fixed;
+		left: -300px;
+		top: 0px;
+		height: 100vh;
+		font-size: 13px;
+		padding: 20px;
+		width: 300px;
+		background: black;
+		color: white;
+		transition: all 200ms cubic-bezier(0.250, 0.100, 0.250, 1.000);
+		transition-timing-function: cubic-bezier(0.250, 0.100, 0.250, 1.000);
+		overflow: scroll;
+	}
+	.quotePanel.shown {
+		left: 0px;
+	}
+	.quotePanel .p2 {
+		color: #aaa;
+	}
+	.close {
+		width: 100%;
+		padding: 5px;
+		background: purple;
+		color:  white;
+		font-weight: bold;
+		text-align: center;
+		cursor: pointer;
+	}
 </style>

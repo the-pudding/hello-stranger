@@ -7,7 +7,8 @@
 :root {
 	/* font */
 	--sans: "Atlas Grotesk", -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
-	--serif: "Tiempos Text", Iowan Old Style, Times New Roman, Times, serif;
+/* 	--serif: "Tiempos Text", Iowan Old Style, Times New Roman, Times, serif; */
+	--serif: Times New Roman, Times, serif;
 	--mono: Menlo, Consolas, Monaco, monospace;
 
 	/* z-index */
@@ -35,7 +36,8 @@
 	--color-input-bg: var(--color-gray-50);
 	--color-input-fg: var(--color-gray-900);
 	--color-placeholder: var(--color-gray-500);
-	--bgcolor: #28212F;
+/* 	--bgcolor: #28212F; */
+	--bgcolor: #fff;
 	--color-light:  #fff;
 
 	/* "1" second duration */
@@ -89,9 +91,11 @@ svg {
 }
 
 #content {
-	font-family: var(--sans) !important;
+/* 	font-family: var(--sans) !important; */
+	font-family:  var(--serif);
 	background: var(--bgcolor);
-	color: var(--color-light);
+/* 	color: var(--color-light); */
+	color: black;
 }
 .visualContainer {
 	position: sticky;
@@ -104,15 +108,15 @@ svg {
 }
 .textContainer {
 	width: 400px;
-	background: #000;
-	color: #DFD2DE;
+	background: #eee;
+	border: 1px solid #000;
+	color: #000;
 	margin: 0px auto;
 	padding: 5px;
 	text-align: left;
 }
 .time {
-	font-size: 12px;
-	opacity: 0.5;
+	font-size: 14px;
 }
 
 .sprite {

@@ -27,19 +27,21 @@
 	let intersectionObservers = [];
 	let container = undefined;
 
-	function mostInView () {
-		let maxRatio = 0;
-		let maxIndex = 0;
-		for (let i = 0; i < steps.length; i++) {
-			if (steps[i] > maxRatio) {
-				maxRatio = steps[i];
-				maxIndex = i;
-			}
-		}
-
-		if (maxRatio > 0) value = maxIndex;
-		else value = undefined;
-	};
+	function mostInView() {
+	  let maxRatio = 0;
+	  let maxIndex = 0;
+	  
+	  for (let i = 0; i < steps.length; i++) {
+	    if (steps[i] > maxRatio) {
+	      maxRatio = steps[i];
+	      maxIndex = i;
+	    }
+	  }
+	  
+	  // Even if maxRatio is 0, still set the value to the closest index (0)
+	  // instead of undefined
+	  value = maxRatio > 0 ? maxIndex : 0;
+	}
 
 	function createObserver(node, index) {
 		const handleIntersect = (e) => {
