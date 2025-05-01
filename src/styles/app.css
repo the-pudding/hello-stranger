@@ -92,7 +92,7 @@ svg {
 
 #content {
 /* 	font-family: var(--sans) !important; */
-	font-family:  var(--serif);
+	font-family:  var(--mono);
 	background: var(--bgcolor);
 /* 	color: var(--color-light); */
 	color: black;

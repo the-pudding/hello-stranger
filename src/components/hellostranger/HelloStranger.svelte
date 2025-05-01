@@ -410,7 +410,7 @@ function updateZoom() {
 	}
 
 	if (zoomData != null && peopleContainer) {
-		const scale = 1.5;
+		const scale = 3;
 
 		const targetCenterX = zoomData.x + zoomData.w / 2;
 		const targetCenterY = zoomData.y + zoomData.h / 2;
@@ -682,7 +682,7 @@ $effect(() => {
 		pointer-events: none;
 /* 		border-top: 1px solid red; */
 }
-.step.active {
+.step.active.time, .step.active .time {
 	font-weight: bold;
 	font-size: 15px;
 }

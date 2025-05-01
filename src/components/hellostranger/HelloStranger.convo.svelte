@@ -141,13 +141,9 @@
     // Function to handle person click - optimized to avoid unnecessary work
   function handlePersonClick(id, key) {
   try {
-    console.log("Quotes data:", quotes);
-    console.log("Current value:", value);
-    
     // Convert value from seconds to minutes
     const minuteIndex = Math.floor(value / 60);
-    console.log("Looking for quotes at minute index:", minuteIndex);
-    
+
     // First check if quotes exists
     if (!quotes) {
       console.log("quotes is undefined or null");
@@ -167,7 +163,6 @@
         const closest = availableIndices.reduce((prev, curr) => 
           Math.abs(curr - minuteIndex) < Math.abs(prev - minuteIndex) ? curr : prev
         );
-        console.log("Using closest available minute index:", closest);
         
         // Call the parent callback with the quote text and person info using the closest available index
         if (onQuoteSelect && typeof onQuoteSelect === 'function') {
@@ -177,16 +172,12 @@
             convoId: convoId,
             value: value
           };
-          console.log("Sending quote data:", quoteData);
           onQuoteSelect(quoteData);
         }
       } else {
-        console.log("No valid indices available in the quotes data");
         return;
       }
     } else {
-      // We found quotes for this exact minute index
-      console.log("Found quotes for this minute index:", quotes[minuteIndex]);
       
       // Call the parent callback with the quote text and person info
       if (onQuoteSelect && typeof onQuoteSelect === 'function') {
@@ -196,7 +187,6 @@
           convoId: convoId,
           value: value
         };
-        console.log("Sending quote data:", quoteData);
         onQuoteSelect(quoteData);
       } else {
         console.log("onQuoteSelect is not a function or is undefined");

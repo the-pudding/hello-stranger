@@ -30,7 +30,56 @@
         isSelected = selected;
         isVisible = visible;
     });
-
+    
+    // Create ASCII art with actual new lines
+    let illo = $state('');
+    
+    // Breathing animation
+    $effect(() => {
+        let breathState = 0;
+        
+        const createPerson = (breath) => {
+            // Using template literals to maintain line breaks
+            if (breath) {
+                return `     ████     
+    ██████    
+   ████████   
+   ██●██●██   
+   ████████   
+    ██▼██     
+   ████████   
+    ██══██    
+     ████     
+   ████████   
+  ██████████  
+ ████████████ `;
+            } else {
+                return `     ████     
+    ██████    
+   ████████   
+   ██●██●██   
+   ████████   
+    ██▼██     
+   ████████   
+    ██══██    
+     ████     
+    ██████    
+   ████████   
+ ████████████ `;
+            }
+        };
+        
+        // Initial state
+        illo = createPerson(0);
+        
+        const interval = setInterval(() => {
+            breathState = (breathState + 1) % 2;
+            illo = createPerson(breathState);
+        }, 800);
+        
+        // Cleanup
+        return () => clearInterval(interval);
+    });
 </script>
 
 <div
@@ -51,10 +100,36 @@
     
     <!-- Use sprite component if available, otherwise use direct image path -->
     <!-- <Sprites /> -->
-    <img class="sprite" src="assets/hello-stranger/person.gif" alt="Person sprite" />
+    <!-- <img class="sprite" src="assets/hello-stranger/person.gif" alt="Person sprite" /> -->
+    <div class="asciiContainer">
+        <pre>{illo}</pre>
+    </div>
 </div>
 
 <style>
+    .asciiContainer {
+        font-family: "Lucida Console", Monaco, monospace;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        font-size: 3em;
+        line-height: 1;
+        color: black;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .asciiContainer pre {
+        margin: 0;
+        padding: 0;
+        font-family: inherit;
+        line-height: 0.8;
+        font-size: 0.9em;
+    }
+    
     .person {
         background: #000;
         display: block;
