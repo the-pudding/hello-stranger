@@ -15,6 +15,8 @@
         scale = '',
         selected = false,
         visible = true,
+        w,
+        h,
         onClick = () => {},
         data
     } = $props();
@@ -29,9 +31,6 @@
         isVisible = visible;
     });
 
-    // Computed values using derived state
-    const height = $derived(sortMode === "person" ? personState.h : convoState.h);
-    const width = $derived(sortMode === "person" ? personState.w : convoState.w/2);
 </script>
 
 <div
@@ -39,8 +38,8 @@
     class:fadeOut={!isVisible}
     class:selected={isSelected}
     style="
-        height: {height}px;
-        width: {width}px;
+        height: {h}px;
+        width: {w}px;
         transform: {transform};
     "
     on:click={onClick}
