@@ -1,6 +1,7 @@
 <script>
 	import { getContext } from "svelte";
 	import HelloStranger from "$components/hellostranger/HelloStranger.svelte";
+	import Draw from "$components/hellostranger/draw.svelte";
 	import Footer from "$components/Footer.svelte";
 
 	const copy = getContext("copy");
@@ -19,6 +20,7 @@
 </script>
 
 <svelte:boundary onerror={(e) => console.error(e)}>
+	<!-- <Draw /> -->
 	<HelloStranger {convos} {people} {copy} />
 	<!-- <Footer recirc={true} /> -->
 

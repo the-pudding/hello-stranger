@@ -1,89 +1,79 @@
 <script>
-    // Import sprite if needed
-    // import Sprites from "./HelloStranger.sprites.svelte";
+// Import sprite if needed
+// import Sprites from "./HelloStranger.sprites.svelte";
+import sprites from "$data/sprites.json";
+// Using Svelte 5 runes syntax for props
+const {
+    personKey, 
+    personData,
+    convoState,
+    personState,
+    sortMode,
+    personColor,
+    backgroundColor,
+    transform = '',
+    scale = '',
+    selected = false,
+    visible = true,
+    w,
+    h,
+    number,
+    onClick = () => {},
+    data,
+    metric
+} = $props();
+
+// Local reactive state using proper Svelte 5 syntax
+let isSelected = $state(selected);
+let isVisible = $state(visible);
+const frameRate = 6; 
+// Effect to update local state when props change
+$effect(() => {
+    isSelected = selected;
+    isVisible = visible;
+});
+
+// Create variable for current sprite frame
+let currentFrame = $state(0);
+let currentAsciiArt = $state('');
+
+
+const sex = (data?.sex === 'male' || data?.sex === 'female') 
+  ? data.sex 
+  : Math.random() > 0.5 ? 'male' : 'female';
+const color = 0;
+const num = 0;
     
-    // Using Svelte 5 runes syntax for props
-    const {
-        personKey, 
-        personData,
-        convoState,
-        personState,
-        sortMode,
-        personColor,
-        backgroundColor,
-        transform = '',
-        scale = '',
-        selected = false,
-        visible = true,
-        w,
-        h,
-        onClick = () => {},
-        data
-    } = $props();
+// Animation for ASCII sprite cycling
+$effect(() => {
+    // Get the correct sprite key based on personData
+    // const sex = personData?.sex || 'male';
+    // const color = personData?.color || 0;
+    // const num = personData?.num || 0;
     
-    // Local reactive state using proper Svelte 5 syntax
-    let isSelected = $state(selected);
-    let isVisible = $state(visible);
+    const spriteKey = `${sex}_${color}_${num}`;
     
-    // Effect to update local state when props change
-    $effect(() => {
-        isSelected = selected;
-        isVisible = visible;
-    });
+    // Animation loop variables
+    let frameCount = 0;
     
-    // Create ASCII art with actual new lines
-    let illo = $state('');
+    // Set initial sprite frame
+    currentAsciiArt = sprites[spriteKey][0];
     
-    // Breathing animation
-    $effect(() => {
-        let breathState = 0;
-        
-        const createPerson = (breath) => {
-            // Using template literals to maintain line breaks
-            if (breath) {
-                return `     ████     
-    ██████    
-   ████████   
-   ██●██●██   
-   ████████   
-    ██▼██     
-   ████████   
-    ██══██    
-     ████     
-   ████████   
-  ██████████  
- ████████████ `;
-            } else {
-                return `     ████     
-    ██████    
-   ████████   
-   ██●██●██   
-   ████████   
-    ██▼██     
-   ████████   
-    ██══██    
-     ████     
-    ██████    
-   ████████   
- ████████████ `;
-            }
-        };
-        
-        // Initial state
-        illo = createPerson(0);
-        
-        const interval = setInterval(() => {
-            breathState = (breathState + 1) % 2;
-            illo = createPerson(breathState);
-        }, 800);
-        
-        // Cleanup
-        return () => clearInterval(interval);
-    });
+    // Set up animation interval to cycle through frames
+    const interval = setInterval(() => {
+        // Cycle through available frames
+        frameCount = (frameCount + 1) % sprites[spriteKey].length;
+        currentAsciiArt = sprites[spriteKey][frameCount];
+        currentFrame = frameCount;
+    }, 1000/frameRate);
+    
+    // Cleanup when component is destroyed or dependencies change
+    return () => clearInterval(interval);
+});
 </script>
 
 <div
-    class="person"
+    class="person person{number}"
     class:fadeOut={!isVisible}
     class:selected={isSelected}
     style="
@@ -98,15 +88,22 @@
         style:transform={scale}
     ></div>
     
-    <!-- Use sprite component if available, otherwise use direct image path -->
-    <!-- <Sprites /> -->
-    <!-- <img class="sprite" src="assets/hello-stranger/person.gif" alt="Person sprite" /> -->
     <div class="asciiContainer">
-        <pre>{illo}</pre>
+        <pre>{currentAsciiArt}</pre>
     </div>
+    <div class="catData">{metric}</div>
 </div>
 
 <style>
+    .catData {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        background: black;
+        color: white;
+        font-weight: bold;
+        font-size: 13px;
+    }
     .asciiContainer {
         font-family: "Lucida Console", Monaco, monospace;
         position: absolute;
@@ -116,6 +113,7 @@
         height: 100%;
         font-size: 3em;
         line-height: 1;
+        letter-spacing: -0.1em;
         color: black;
         display: flex;
         align-items: center;
@@ -126,12 +124,15 @@
         margin: 0;
         padding: 0;
         font-family: inherit;
-        line-height: 0.8;
-        font-size: 0.9em;
+        line-height: 0.5;
+        font-size: 1.1em;
     }
-    
+    .person2 .asciiContainer pre {
+         transform: scaleX(-1);
+    }
+     
     .person {
-        background: #000;
+        background: #ddd;
         display: block;
         position: absolute;
         transform-origin: top left;
@@ -139,7 +140,7 @@
         font-size: 2px;
         color: white;
         opacity: 1;
-        transition: transform 1800ms cubic-bezier(0.420, 0.000, 0.580, 1.000), opacity 0.3s ease-in-out;
+        transition: transform 2s ease-in-out, opacity 0.3s ease-in-out;
         cursor: pointer;
         /* Hardware acceleration optimizations */
         will-change: transform, opacity;

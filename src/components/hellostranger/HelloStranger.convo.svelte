@@ -22,8 +22,10 @@
         w,
         h,
         chartWidth,
-        chartHeight
+        chartHeight,
+        sortCategory
     } = $props();
+
     
     // Add null/undefined check for convo
     const affectColumns = ["pre_affect", "begin_affect", "middle_affect", "end_affect"];
@@ -97,146 +99,153 @@
     // Calculate transform values once to avoid repeated string concatenation
     // This reduces layout thrashing during animations
     let p1Transform = $derived(
-        `translate3d(${sortMode === 'person' ? p1state?.x || 0 : convoState?.x || 0}px, ` +
-        `${sortMode === 'person' ? p1state?.y || 0 : convoState?.y || 0}px, 0)`
+    `translate3d(${sortMode === 'person' ? p1state?.x || 0 : convoState?.x || 0}px, ` +
+    `${sortMode === 'person' ? p1state?.y || 0 : convoState?.y || 0}px, 0)`
     );
     let p2Transform = $derived(
-        `translate3d(${sortMode === 'person' ? p2state?.x || 0 : (convoState?.x || 0) + (convoState?.w || 0) / 2}px, ` +
-        `${sortMode === 'person' ? p2state?.y || 0 : convoState?.y || 0}px, 0)`
+    `translate3d(${sortMode === 'person' ? p2state?.x || 0 : (convoState?.x || 0) + (convoState?.w || 0) / 2}px, ` +
+    `${sortMode === 'person' ? p2state?.y || 0 : convoState?.y || 0}px, 0)`
     );
 
     // Precompute scale values for transforms rather than changing heights
 
     let p1Scale = $derived(affectColumns.includes(personColor) ? 
-        `scaleY(${(p1[personColor] || 0) / 10})` : 
-        "scaleY(1)"
+    `scaleY(${(p1[personColor] || 0) / 10})` : 
+    "scaleY(1)"
     );
 
     let p2Scale = $derived(affectColumns.includes(personColor) ? 
-        `scaleY(${(p2[personColor] || 0) / 10})` : 
-        "scaleY(1)"
+    `scaleY(${(p2[personColor] || 0) / 10})` : 
+    "scaleY(1)"
     );
     
     // Precompute background colors
     let p1BackgroundColor = $derived(
         affectColumns.includes(personColor) ? 
-            getAffectColor(affectDiff[0][personColor]) || defaultColor : 
-            (colors[personColor] ? colors[personColor][p1data?.[personColor]] : defaultColor) || defaultColor
-    );
+        getAffectColor(affectDiff[0][personColor]) || defaultColor : 
+        (colors[personColor] ? colors[personColor][p1data?.[personColor]] : defaultColor) || defaultColor
+        );
     
     let p2BackgroundColor = $derived(
         affectColumns.includes(personColor) ? 
-            getAffectColor(affectDiff[1][personColor]) || defaultColor : 
-            (colors[personColor] ? colors[personColor][p2data?.[personColor]] : defaultColor) || defaultColor
-    );
+        getAffectColor(affectDiff[1][personColor]) || defaultColor : 
+        (colors[personColor] ? colors[personColor][p2data?.[personColor]] : defaultColor) || defaultColor
+        );
     
     // Watch for changes to value and reset quotes when it changes
     $effect(() => {
         if (value !== prevValue) {
             quoteText = null;
             prevValue = value;
+            if (convoId == "0020a0c5-1658-4747-99c1-2839e736b481") {
+                console.log(convo)
+            }
         }
     });
     
     // Function to handle person click - optimized to avoid unnecessary work
-  function handlePersonClick(id, key) {
-  try {
+    function handlePersonClick(id, key) {
+      try {
     // Convert value from seconds to minutes
-    const minuteIndex = Math.floor(value / 60);
+        const minuteIndex = Math.floor(value / 60);
 
     // First check if quotes exists
-    if (!quotes) {
-      console.log("quotes is undefined or null");
-      return;
-    }
-    
+        if (!quotes) {
+          console.log("quotes is undefined or null");
+          return;
+      }
+
     // Check if there are quotes for this minute index
-    if (!quotes[minuteIndex]) {
-      console.log("No quotes for this minute index:", minuteIndex);
-      
+      if (!quotes[minuteIndex]) {
+          console.log("No quotes for this minute index:", minuteIndex);
+
       // Try to find the closest available minute index
-      const availableIndices = Object.keys(quotes)
-        .filter(index => quotes[index] !== null)
-        .map(Number);
-      
-      if (availableIndices.length > 0) {
-        const closest = availableIndices.reduce((prev, curr) => 
-          Math.abs(curr - minuteIndex) < Math.abs(prev - minuteIndex) ? curr : prev
-        );
-        
+          const availableIndices = Object.keys(quotes)
+          .filter(index => quotes[index] !== null)
+          .map(Number);
+
+          if (availableIndices.length > 0) {
+            const closest = availableIndices.reduce((prev, curr) => 
+              Math.abs(curr - minuteIndex) < Math.abs(prev - minuteIndex) ? curr : prev
+              );
+
         // Call the parent callback with the quote text and person info using the closest available index
-        if (onQuoteSelect && typeof onQuoteSelect === 'function') {
-          const quoteData = {
-            quoteText: quotes[closest],
-            personId: id,
-            convoId: convoId,
-            value: value
-          };
-          onQuoteSelect(quoteData);
+            if (onQuoteSelect && typeof onQuoteSelect === 'function') {
+              const quoteData = {
+                quoteText: quotes[closest],
+                personId: id,
+                convoId: convoId,
+                value: value
+            };
+            onQuoteSelect(quoteData);
         }
-      } else {
-        return;
-      }
     } else {
-      
-      // Call the parent callback with the quote text and person info
-      if (onQuoteSelect && typeof onQuoteSelect === 'function') {
-        const quoteData = {
-          quoteText: quotes[minuteIndex],
-          personId: id,
-          convoId: convoId,
-          value: value
-        };
-        onQuoteSelect(quoteData);
-      } else {
-        console.log("onQuoteSelect is not a function or is undefined");
-      }
+        return;
     }
-  } catch (error) {
-    console.error('Error in handlePersonClick:', error);
-  }
+} else {
+
+      // Call the parent callback with the quote text and person info
+  if (onQuoteSelect && typeof onQuoteSelect === 'function') {
+    const quoteData = {
+      quoteText: quotes[minuteIndex],
+      personId: id,
+      convoId: convoId,
+      value: value
+  };
+  onQuoteSelect(quoteData);
+} else {
+    console.log("onQuoteSelect is not a function or is undefined");
 }
-    
+}
+} catch (error) {
+    console.error('Error in handlePersonClick:', error);
+}
+}
+
     // Only render if we have valid data
-    const shouldRender = convo && convoState && p1Key && p2Key;
+const shouldRender = convo && convoState && p1Key && p2Key;
 </script>
 
 {#if shouldRender}
-    <Person
-        personKey={p1Key}
-        personData={p1}
-        convoState={convoState}
-        personState={p1state}
-        sortMode={sortMode}
-        personColor={personColor}
-        backgroundColor={p1BackgroundColor}
-        transform={p1Transform}
-        scale={p1Scale}
-        selected={isP1Selected}
-        visible={visible}
-        data={p1data}
-        onClick={() => handlePersonClick(p1Key, 0)}
-        {w}
-        {h}
-        opacity={p1Opacity}
-    />
+<Person
+number="1"
+personKey={p1Key}
+personData={p1}
+convoState={convoState}
+personState={p1state}
+sortMode={sortMode}
+personColor={personColor}
+backgroundColor={p1BackgroundColor}
+transform={p1Transform}
+scale={p1Scale}
+selected={isP1Selected}
+visible={visible}
+data={p1data}
+onClick={() => handlePersonClick(p1Key, 0)}
+{w}
+{h}
+opacity={p1Opacity}
+metric={convo[sortCategory]}
+/>
 
-    <Person
-        personKey={p2Key}
-        personData={p2}
-        convoState={convoState}
-        personState={p2state}
-        sortMode={sortMode}
-        personColor={personColor}
-        backgroundColor={p2BackgroundColor}
-        transform={p2Transform}
-        scale={p2Scale}
-        selected={isP2Selected}
-        visible={visible}
-        data={p2data}
-        onClick={() => handlePersonClick(p2Key, 1)}
-        {w}
-        {h}
-        opacity={p2Opacity}
-    />
+<Person
+number="2"
+personKey={p2Key}
+personData={p2}
+convoState={convoState}
+personState={p2state}
+sortMode={sortMode}
+personColor={personColor}
+backgroundColor={p2BackgroundColor}
+transform={p2Transform}
+scale={p2Scale}
+selected={isP2Selected}
+visible={visible}
+data={p2data}
+onClick={() => handlePersonClick(p2Key, 1)}
+{w}
+{h}
+opacity={p2Opacity}
+metric={convo[sortCategory]}
+/>
 {/if}
