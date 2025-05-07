@@ -91,18 +91,47 @@ $effect(() => {
     <div class="asciiContainer">
         <pre>{currentAsciiArt}</pre>
     </div>
-    <div class="catData">{metric}</div>
+    <div class="catData">{metric} ({personData.age}/{personData.sex[0]}/{personData.race[0]})</div>
+    {#if personState.quoteText}
+    <div class="quote" style="width:{personState.quoteText.length*3}px;">
+        {personState.quoteText}
+    </div>
+    {/if}
 </div>
 
 <style>
+    .quote {
+        position: absolute;
+        top: calc(100% + 10px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: black;
+        color: white;
+        max-width: 200px;
+        min-width: 60px;
+        padding: 5px;
+        font-size: 8px;
+    }
+    .quote:after {
+        content: "";
+        width: 0; 
+      height: 0; 
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-bottom: 6px solid black;
+      position: absolute;
+      bottom: 100%;
+      left: calc(50% - 3px);
+    }
     .catData {
         position: absolute;
         right: 0;
         bottom: 0;
         background: black;
         color: white;
-        font-weight: bold;
-        font-size: 13px;
+/*         font-weight: bold; */
+        font-size: 7px;
+        width: 100%;
     }
     .asciiContainer {
         font-family: "Lucida Console", Monaco, monospace;

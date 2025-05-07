@@ -6,7 +6,8 @@
 	import { onMount } from "svelte";
 	import { fade } from 'svelte/transition';
 	import quotes from "$data/nearest_quote.json";
-	
+	import colors from "$data/colors.json";
+
 	let { convos, people, copy } = $props();
 	let filteredConvos = $state({}); // Initialize as an empty object
 	let w = $state(60);  // Fixed width
@@ -25,11 +26,25 @@
 	let sortMode = $state(copy.copy[value].sortMode);
 	let zoomPerson = $state(copy.copy[value].zoomPerson);
 	let personColor = $state(copy.copy[value].personColor);
+	let quotePerson = $state(copy.copy[value].quotePerson);
+	let currentText = $state(copy.copy[value].text);
 	let quoteState = $state([null,null,null,null,null,null]);
 	// Track the selected person ID instead of convo
 	let selectedPersonId = $state(null);
 	let selectedConvoId = $state(null);
 	const zoomSpeed = 2;
+
+	// Add scroll position tracking
+	let scrollY = $state(0);
+	let isAtTop = $state(true);
+
+	// Function to update scroll position
+	function updateScrollPosition() {
+		if (typeof window !== 'undefined') {
+			scrollY = window.scrollY;
+			isAtTop = scrollY < 50; // Consider "top" to be first 50px for better UX
+		}
+	}
 
 	let timeRange = [];
 	const tickNums = 60;
@@ -68,8 +83,11 @@
 
 	
 	function filterConvos() {
-	    // This function now handles the slicing to maxCells
-	    
+		/// 0d7fc2a3-37b2-44b8-a60a-c69d6016b65e
+		/// 0c9e034f-2fdc-4ba8-b104-1fe709f786f5
+		// 725b5586-09b0-4701-a975-03bbd6b88edf
+		const zoomConvos = ["2f749ec2-aa7b-4a41-8aa1-5bd7a387b90a","22083989-6244-440b-af5b-93a3a10f6e04","0d7fc2a3-37b2-44b8-a60a-c69d6016b65e","0c9e034f-2fdc-4ba8-b104-1fe709f786f5","725b5586-09b0-4701-a975-03bbd6b88edf"];
+
 	    // Set w and h to your fixed values
 	    w = 60;  // Fixed width
 	    h = 60;  // Fixed height
@@ -87,14 +105,21 @@
 	    const maxRows = Math.floor((availableHeight + innerPadding) / (fixedHeight + innerPadding));
 	    const maxCells = maxCols * maxRows;
 	    
-	    // First slice a copy of convos to maxCells, then sort
-	    const convoEntries = Object.entries(convos).slice(0, maxCells);
+	    // Get all conversation entries
+	    let convoEntries = Object.entries(convos);
+	    
+	    // Separate zoom conversations from regular conversations
+	    const prioritizedConvos = convoEntries.filter(([id, _]) => zoomConvos.includes(id));
+	    const regularConvos = convoEntries.filter(([id, _]) => !zoomConvos.includes(id));
+	    
+	    // Combine conversations with prioritized ones first, then limit to maxCells
+	    convoEntries = [...prioritizedConvos, ...regularConvos].slice(0, maxCells);
 	    
 	    // Create filtered convos object
 	    filteredConvos = Object.fromEntries(convoEntries);
 	    totalConvos = convoEntries.length;
 	    
-	    // Return true to indicate that we should proceed with updates
+	    // Return layout parameters
 	    return { maxCols, maxRows, maxCells, innerPadding, outerPadding };
 	}
 
@@ -127,6 +152,8 @@
 		const newZoomPerson = latestItem?.zoomPerson ?? null;
 		const newPersonColor = latestItem?.personColor ?? null;
 		const newSortMode = latestItem?.sortMode ?? null;
+		const newQuotePerson = latestItem?.quotePerson ?? null;
+		const newCurrentText = latestItem?.text ?? null;
 
 		// Only update if values are different
 		let needsUpdate = false;
@@ -146,6 +173,16 @@
 			needsUpdate = true;
 		}
 
+		if (newQuotePerson !== quotePerson) {
+			quotePerson = newQuotePerson;
+			needsUpdate = true;
+		}
+
+		if (newCurrentText !== currentText) {
+			currentText = newCurrentText;
+			needsUpdate = true;
+		}
+
 		// Only update zoom if person changes
 		if (newZoomPerson !== zoomPerson) {
 			zoomPerson = newZoomPerson;
@@ -157,227 +194,250 @@
 	}
 
 	function updateConvos() {
-	    const fixedHeight = 60;
-	    const fixedWidth = fixedHeight * 2;
-	    
+		const fixedHeight = 60;
+		const fixedWidth = fixedHeight * 2;
+
 	    // Get layout parameters from filterConvos (these are already calculated)
-	    const { maxCols, maxRows, maxCells, innerPadding, outerPadding } = filterConvos();
-	    
-	    const availableWidth = chartWidth - outerPadding.left - outerPadding.right;
-	    const availableHeight = chartHeight - outerPadding.top - outerPadding.bottom;
-	    
+		const { maxCols, maxRows, maxCells, innerPadding, outerPadding } = filterConvos();
+
+		const availableWidth = chartWidth - outerPadding.left - outerPadding.right;
+		const availableHeight = chartHeight - outerPadding.top - outerPadding.bottom;
+
 	    // Sort the already filtered conversations
-	    const sortedConvos = Object.entries(filteredConvos).sort((a, b) => {
-	        if (!sortCategory) return a[0].localeCompare(b[0]);
-	        
-	        const aVal = a[1]?.[sortCategory];
-	        const bVal = b[1]?.[sortCategory];
-	        if (aVal !== undefined && bVal !== undefined) {
-	            return (typeof aVal === 'string')
-	                ? aVal.localeCompare(bVal)
-	                : aVal - bVal;
-	        }
-	        return aVal !== undefined ? -1 : bVal !== undefined ? 1 : a[0].localeCompare(b[0]);
-	    });
-	    
-	    const actualRows = Math.ceil(totalConvos / maxCols);
-	    const gridWidth = maxCols * fixedWidth + innerPadding * (maxCols - 1);
-	    const gridHeight = actualRows * fixedHeight + innerPadding * (actualRows - 1);
-	    
-	    const startX = outerPadding.left + (availableWidth - gridWidth) / 2;
-	    const startY = outerPadding.top + (availableHeight - gridHeight) / 2;
-	    
+		const sortedConvos = Object.entries(filteredConvos).sort((a, b) => {
+			if (!sortCategory) return a[0].localeCompare(b[0]);
+
+			const aVal = a[1]?.[sortCategory];
+			const bVal = b[1]?.[sortCategory];
+			if (aVal !== undefined && bVal !== undefined) {
+				return (typeof aVal === 'string')
+				? aVal.localeCompare(bVal)
+				: aVal - bVal;
+			}
+			return aVal !== undefined ? -1 : bVal !== undefined ? 1 : a[0].localeCompare(b[0]);
+		});
+
+		const actualRows = Math.ceil(totalConvos / maxCols);
+		const gridWidth = maxCols * fixedWidth + innerPadding * (maxCols - 1);
+		const gridHeight = actualRows * fixedHeight + innerPadding * (actualRows - 1);
+
+		const startX = outerPadding.left + (availableWidth - gridWidth) / 2;
+		const startY = outerPadding.top + (availableHeight - gridHeight) / 2;
+
 	    // Build convoState
-	    convoState = Object.fromEntries(sortedConvos.map(([key, value], index) => {
-	        const col = index % maxCols;
-	        const row = Math.floor(index / maxCols);
-	        const x = startX + col * (fixedWidth + innerPadding);
-	        const y = startY + row * (fixedHeight + innerPadding);
-	        
-	        const personIds = Object.keys(value).filter(k => typeof value[k] === 'object' && k.startsWith('5'));
-	        
-	        return [key, {
-	            ids: personIds.slice(0, 2),
-	            x,
-	            y,
-	            w: fixedWidth,
-	            h: fixedHeight,
-	            speed: value === 0 ? [0, 0] : [Math.random() * 2000 + 2000, Math.random() * 2000 + 2000]
-	        }];
-	    }));
+		convoState = Object.fromEntries(sortedConvos.map(([key, value], index) => {
+			const col = index % maxCols;
+			const row = Math.floor(index / maxCols);
+			const x = startX + col * (fixedWidth + innerPadding);
+			const y = startY + row * (fixedHeight + innerPadding);
+
+			const personIds = Object.keys(value).filter(k => typeof value[k] === 'object' && k.startsWith('5'));
+
+			return [key, {
+				ids: personIds.slice(0, 2),
+				x,
+				y,
+				w: fixedWidth,
+				h: fixedHeight,
+				speed: value === 0 ? [0, 0] : [Math.random() * 2000 + 2000, Math.random() * 2000 + 2000]
+			}];
+		}));
 	}
 
 
 	// Fixed updatePeople function to properly respect sortMode and sortCategory
 	function updatePeople() {
-		// Fixed size for each person cell
-		const fixedWidth = 60;  // Fixed width
-		const fixedHeight = 60; // Fixed height
-		
-		// Define outer padding structure like in updateConvos
-		const outerPadding = {
-			top: 5,
-			right: 50,
-			bottom: 5,
-			left: 5
-		};
-		
-		// Calculate how many personIds we need to display
-		const uniqueKeys = new Set();
-		const personIdGroups = {};
-		
-		// Collect all keys and group by personId
-		if (filteredConvos && Object.keys(filteredConvos).length > 0) {
-			Object.values(filteredConvos).forEach(person => {
-				if (person) {
-					Object.keys(person).forEach(key => {
-						if (typeof person[key] === "object" && key[0] === "5") {
-							uniqueKeys.add(key);
+	    // Fixed size for each person cell
+	    const fixedWidth = 60;  // Fixed width
+	    const fixedHeight = 60; // Fixed height
+	    
+	    // Define outer padding structure like in updateConvos
+	    const outerPadding = {
+	    	top: 5,
+	    	right: 50,
+	    	bottom: 5,
+	    	left: 5
+	    };
+	    
+	    // Calculate how many personIds we need to display
+	    const uniqueKeys = new Set();
+	    const personIdGroups = {};
+	    
+	    // Collect all keys and group by personId
+	    if (filteredConvos && Object.keys(filteredConvos).length > 0) {
+	    	Object.values(filteredConvos).forEach(person => {
+	    		if (person) {
+	    			Object.keys(person).forEach(key => {
+	    				if (typeof person[key] === "object" && key[0] === "5") {
+	    					uniqueKeys.add(key);
 
-							// Extract personId from key
-							const personId = key.split('-')[0] || key;
+	                        // Extract personId from key
+	    					const personId = key.split('-')[0] || key;
 
-							if (!personIdGroups[personId]) {
-								personIdGroups[personId] = [];
-							}
-							personIdGroups[personId].push(key);
-						}
-					});
-				}
-			});
-		}
-		
-		// Count unique personIds
-		const uniquePersonIdCount = Object.keys(personIdGroups).length;
+	    					if (!personIdGroups[personId]) {
+	    						personIdGroups[personId] = [];
+	    					}
+	    					personIdGroups[personId].push(key);
+	    				}
+	    			});
+	    		}
+	    	});
+	    }
+	    
+	    // Count unique personIds
+	    const uniquePersonIdCount = Object.keys(personIdGroups).length;
 
-		// Sort personIds by sortCategory - improved sorting logic
-		const sortedPersonIds = Object.keys(personIdGroups).sort((personIdA, personIdB) => {
-			// Get representative keys for each personId
-			const keysA = personIdGroups[personIdA] || [];
-			const keysB = personIdGroups[personIdB] || [];
-			
-			// Find the first key that has valid sortCategory data
-			let keyA = null;
-			for (const k of keysA) {
-				if (people[k] && people[k][sortCategory] !== undefined) {
-					keyA = k;
-					break;
-				}
-			}
-			
-			let keyB = null;
-			for (const k of keysB) {
-				if (people[k] && people[k][sortCategory] !== undefined) {
-					keyB = k;
-					break;
-				}
-			}
-			
-			// Fall back to first key if no key with sortCategory was found
-			keyA = keyA || (keysA.length > 0 ? keysA[0] : null);
-			keyB = keyB || (keysB.length > 0 ? keysB[0] : null);
-			
-			// If either key is null, sort alphabetically by personId
-			if (!keyA || !keyB) {
-				return personIdA.localeCompare(personIdB);
-			}
+	    // Define color orders from colors.json for custom sorting
+	    const colorOrders = {
+	        politics: ["0", "1", "2", "3", "4", "6"], // Order from colors.json
+	        race: ["prefer_not_to_say", "other", "mixed", "native_hawaiian_or_pacific_islander", "american_indian_or_alaska_native", "asian", "black_or_african_american", "hispanic_or_latino", "white"],
+	        edu: ["some_high_school", "completed_high_school", "some_college", "associate_degree", "bachelors_degree", "masters_degree", "doctoral_degree", "professional_degree"]
+	    };
 
-			// Get the sort values from people object
-			const dataA = people[keyA];
-			const dataB = people[keyB];
-			
-			if (!dataA || !dataB) {
-				return personIdA.localeCompare(personIdB);
-			}
+	    // Sort personIds by sortCategory - improved sorting logic with custom ordering
+	    const sortedPersonIds = Object.keys(personIdGroups).sort((personIdA, personIdB) => {
+	        // Get representative keys for each personId
+	    	const keysA = personIdGroups[personIdA] || [];
+	    	const keysB = personIdGroups[personIdB] || [];
 
-			const aVal = dataA[sortCategory] !== undefined ? dataA[sortCategory] : '';
-			const bVal = dataB[sortCategory] !== undefined ? dataB[sortCategory] : '';
+	        // Find the first key that has valid sortCategory data
+	    	let keyA = null;
+	    	for (const k of keysA) {
+	    		if (people[k] && people[k][sortCategory] !== undefined) {
+	    			keyA = k;
+	    			break;
+	    		}
+	    	}
 
-			// Handle different data types
-			if (typeof aVal === 'string' && typeof bVal === 'string') {
-				return aVal.localeCompare(bVal);
-			} else {
-				if (aVal < bVal) return -1;
-				if (aVal > bVal) return 1;
-				return 0;
-			}
-		});
-		
-		// Start with adaptive inner padding based on available space
-		let innerPadding = Math.max(2, Math.min(8, (chartWidth * chartHeight) / 50000));
-		
-		// Calculate available space for the grid
-		const availableWidth = chartWidth - (outerPadding.left + outerPadding.right);
-		const availableHeight = chartHeight - (outerPadding.top + outerPadding.bottom);
-		
-		// Calculate how many columns would fit in the available width
-		const maxPossibleCols = Math.floor((availableWidth + innerPadding) / (fixedWidth + innerPadding));
-		
-		// Calculate required rows based on total personIds and columns
-		const requiredRows = Math.ceil(uniquePersonIdCount / maxPossibleCols);
-		
-		// Calculate initial grid height with these rows
-		const initialGridHeight = requiredRows * fixedHeight + (requiredRows - 1) * innerPadding;
-		
-		// Determine final maxCols value
-		let maxCols = maxPossibleCols;
-		
-		// Check if the grid height fits the available height
-		if (initialGridHeight > availableHeight) {
-			// Grid is too tall, need to adjust
-			// Reduce innerPadding if possible
-			innerPadding = Math.max(1, innerPadding - 2);
+	    	let keyB = null;
+	    	for (const k of keysB) {
+	    		if (people[k] && people[k][sortCategory] !== undefined) {
+	    			keyB = k;
+	    			break;
+	    		}
+	    	}
 
-			// Recalculate with new padding
-			const adjustedMaxCols = Math.floor((availableWidth + innerPadding) / (fixedWidth + innerPadding));
-			
-			// Use the adjusted values
-			maxCols = adjustedMaxCols;
-		}
-		
-		// Ensure we have at least 1 column
-		maxCols = Math.max(1, maxCols);
-		
-		// Calculate final grid dimensions
-		const actualCols = Math.min(maxCols, uniquePersonIdCount);
-		const actualRows = Math.ceil(uniquePersonIdCount / actualCols);
-		
-		// Calculate total grid width and height
-		const totalGridWidth = actualCols * fixedWidth + (actualCols - 1) * innerPadding;
-		const finalGridHeight = actualRows * fixedHeight + (actualRows - 1) * innerPadding;
-		
-		// Calculate grid dimensions for positioning
-		const gridStartX = outerPadding.left + (availableWidth - totalGridWidth) / 2;
-		const gridStartY = outerPadding.top + (availableHeight - finalGridHeight) / 2;
-		
-		// Create grid layout for people
-		let updatedPeople = {};
-		
-		// Position each personId in the grid
-		sortedPersonIds.forEach((personId, index) => {
-			// Calculate exact grid position
-			const col = index % actualCols;
-			const row = Math.floor(index / actualCols);
+	        // Fall back to first key if no key with sortCategory was found
+	    	keyA = keyA || (keysA.length > 0 ? keysA[0] : null);
+	    	keyB = keyB || (keysB.length > 0 ? keysB[0] : null);
 
-			// Calculate exact pixel position
-			const x = gridStartX + col * (fixedWidth + innerPadding);
-			const y = gridStartY + row * (fixedHeight + innerPadding);
+	        // If either key is null, sort alphabetically by personId
+	    	if (!keyA || !keyB) {
+	    		return personIdA.localeCompare(personIdB);
+	    	}
 
-			// Apply this position to all people with this personId
-			const keysForThisPersonId = personIdGroups[personId] || [];
-			keysForThisPersonId.forEach(key => {
-				updatedPeople[key] = {
-					x,
-					y,
-					w: fixedWidth,
-					h: fixedHeight,
-					opacity: 1 // Fully visible
-				};
-			});
-		});
-		
-		// Set peopleState to the updated layout
-		peopleState = updatedPeople;
+	        // Get the sort values from people object
+	    	const dataA = people[keyA];
+	    	const dataB = people[keyB];
+
+	    	if (!dataA || !dataB) {
+	    		return personIdA.localeCompare(personIdB);
+	    	}
+
+	    	const aVal = dataA[sortCategory] !== undefined ? dataA[sortCategory] : '';
+	    	const bVal = dataB[sortCategory] !== undefined ? dataB[sortCategory] : '';
+
+	        // Use custom ordering for specific categories if available
+	    	if (colorOrders[sortCategory]) {
+	    		const aIndex = colorOrders[sortCategory].indexOf(aVal);
+	    		const bIndex = colorOrders[sortCategory].indexOf(bVal);
+
+	            // If both values are found in the color order
+	    		if (aIndex !== -1 && bIndex !== -1) {
+	    			return aIndex - bIndex;
+	    		}
+
+	            // If only one value is found, prioritize the one in the order
+	    		if (aIndex !== -1) return -1;
+	    		if (bIndex !== -1) return 1;
+	    	}
+
+	        // Fall back to default sorting if no custom order or values not found
+	    	if (typeof aVal === 'string' && typeof bVal === 'string') {
+	    		return aVal.localeCompare(bVal);
+	    	} else {
+	    		if (aVal < bVal) return -1;
+	    		if (aVal > bVal) return 1;
+	    		return 0;
+	    	}
+	    });
+
+	    // Start with adaptive inner padding based on available space
+	    let innerPadding = Math.max(2, Math.min(8, (chartWidth * chartHeight) / 50000));
+
+	    // Calculate available space for the grid
+	    const availableWidth = chartWidth - (outerPadding.left + outerPadding.right);
+	    const availableHeight = chartHeight - (outerPadding.top + outerPadding.bottom);
+
+	    // Calculate how many columns would fit in the available width
+	    const maxPossibleCols = Math.floor((availableWidth + innerPadding) / (fixedWidth + innerPadding));
+
+	    // Calculate required rows based on total personIds and columns
+	    const requiredRows = Math.ceil(uniquePersonIdCount / maxPossibleCols);
+
+	    // Calculate initial grid height with these rows
+	    const initialGridHeight = requiredRows * fixedHeight + (requiredRows - 1) * innerPadding;
+
+	    // Determine final maxCols value
+	    let maxCols = maxPossibleCols;
+
+	    // Check if the grid height fits the available height
+	    if (initialGridHeight > availableHeight) {
+	        // Grid is too tall, need to adjust
+	        // Reduce innerPadding if possible
+	    	innerPadding = Math.max(1, innerPadding - 2);
+
+	        // Recalculate with new padding
+	    	const adjustedMaxCols = Math.floor((availableWidth + innerPadding) / (fixedWidth + innerPadding));
+
+	        // Use the adjusted values
+	    	maxCols = adjustedMaxCols;
+	    }
+
+	    // Ensure we have at least 1 column
+	    maxCols = Math.max(1, maxCols);
+
+	    // Calculate final grid dimensions
+	    const actualCols = Math.min(maxCols, uniquePersonIdCount);
+	    const actualRows = Math.ceil(uniquePersonIdCount / actualCols);
+
+	    // Calculate total grid width and height
+	    const totalGridWidth = actualCols * fixedWidth + (actualCols - 1) * innerPadding;
+	    const finalGridHeight = actualRows * fixedHeight + (actualRows - 1) * innerPadding;
+
+	    // Calculate grid dimensions for positioning
+	    const gridStartX = outerPadding.left + (availableWidth - totalGridWidth) / 2;
+	    const gridStartY = outerPadding.top + (availableHeight - finalGridHeight) / 2;
+
+	    // Create grid layout for people
+	    let updatedPeople = {};
+
+	    // Position each personId in the grid
+	    sortedPersonIds.forEach((personId, index) => {
+	        // Calculate exact grid position
+	    	const col = index % actualCols;
+	    	const row = Math.floor(index / actualCols);
+
+	        // Calculate exact pixel position
+	    	const x = gridStartX + col * (fixedWidth + innerPadding);
+	    	const y = gridStartY + row * (fixedHeight + innerPadding);
+	    	const quoteText = quotePerson == personId ? currentText : null;
+	        // Apply this position to all people with this personId
+	    	const keysForThisPersonId = personIdGroups[personId] || [];
+	    	keysForThisPersonId.forEach(key => {
+	    		updatedPeople[key] = {
+	    			quoteText: quoteText,
+	    			x,
+	    			y,
+	    			w: fixedWidth,
+	    			h: fixedHeight,
+	                opacity: 1 // Fully visible
+	            };
+	        });
+	    });
+
+	    // Set peopleState to the updated layout
+	    peopleState = updatedPeople;
 	}
 
 	function countUniqueInnerKeys(objectOfObjects) {
@@ -446,6 +506,7 @@
 	}
 
 	function handleQuoteSelection(quoteData) {
+		console.log(quoteData.convoId)
 		// console.log("Person clicked:", quoteData.personId);
 		quoteState = quoteData.quoteText;
 		// Update the selected person ID when a person is clicked
@@ -490,7 +551,7 @@
 	onMount(() => {
 		if (!initialized) {
 			initialized = true;
-			if (typeof value !== "number") value = 0;
+			// if (typeof value !== "number") value = 0;
 
 			// For initial setup, directly set values and call update functions
 			if (peopleContainer) {
@@ -500,16 +561,16 @@
 				// Initial setup - make sure we have proper order of operations
 				// First update category to ensure sortCategory and sortMode are set correctly
 				updateCategory();
-				
+
 				// Then filter and create the filteredConvos
 				filterConvos();
-				
+
 				// Update convos based on the current sortCategory and sortMode
 				updateConvos();
-				
+
 				// Then update people using the filtered convos and current sortCategory
 				updatePeople();
-				
+
 				// Finally handle zoom if needed
 				if (zoomPerson) {
 					updateZoom();
@@ -525,26 +586,35 @@
 
 		// Use the debounced version for resize events
 		window.addEventListener('resize', updateSize);
-		return () => window.removeEventListener('resize', updateSize);
+		
+		// Add scroll listener to update scroll position
+		window.addEventListener('scroll', updateScrollPosition);
+		// Set initial scroll position
+		updateScrollPosition();
+		
+		return () => {
+			window.removeEventListener('resize', updateSize);
+			window.removeEventListener('scroll', updateScrollPosition);
+		};
 	});
 
 	// Main effect to handle value changes and update the visualization accordingly
 	$effect(() => {
 		if (hasLoaded) {
 			// Immediately check value type and set if needed
-			if (typeof value !== "number") {
-				value = 0;
-			}
+			// if (typeof value !== "number") {
+			// 	value = 0;
+			// }
 
 			// Update scene speed first (affects animation transition)
 			sceneSpeed = value === 0 ? 0 : zoomSpeed;
 
 			// Update categorical data and check if we need layout updates
 			const needsUpdate = updateCategory();
-			
+
 			// Force layouts to update even if categories didn't change
 			// This ensures that sorting updates are always applied
-			
+
 			// Use requestAnimationFrame to batch visual updates
 			requestAnimationFrame(() => {
 				// Select the proper update sequence based on sortMode
@@ -557,7 +627,7 @@
 					updateConvos();
 					updatePeople();
 				}
-				
+
 				// Finally update zoom if needed
 				if (zoomPerson) {
 					updateZoom();
@@ -589,7 +659,7 @@
 	});
 
 </script>
-<div class="debug">{sortCategory}</div>
+<div class="debug">{sortCategory} {value}</div>
 <div id="content">
 	<section id="scrolly">
 		<div class="visualContainer" bind:this={peopleContainer}>
@@ -628,7 +698,7 @@
 			{/each}
 			{/if}
 		</div>
-		{#if value == 0}
+		{#if isAtTop}
 		<div class="headline" transition:fade>
 			<h1>hello, stranger</h1>
 			<div class="byline">by <a href="https://pudding.cool/author/alvin-chang/">alvin chang</a></div>
@@ -637,10 +707,11 @@
 	</div>
 
 	<div class="timeline">
-		<Scrolly bind:value top={chartHeight/2.1}>
+		<Scrolly bind:value top={chartHeight - 50}>
 			{#each timeRange as time, i}
 			{@const active = value === i}
-			{#if checkCopy(time) == false}
+			{#if checkCopy(time).quotePerson == null}
+			{#if checkCopy(time) == false || checkCopy(time).time==0}
 			<div class="step time" class:active>
 				{convertTime(time)}
 			</div>
@@ -649,6 +720,7 @@
 				<div class="time">{convertTime(time)}</div>
 				<Text copy={checkCopy(time).text} time={convertTime(time)} />
 			</div>
+			{/if}
 			{/if}
 			{/each}
 		</Scrolly>
@@ -686,74 +758,76 @@
 	.timeline {
 		position: relative;
 		z-index: 100;
-		pointer-events: none;
+/* 		pointer-events: none; */
+		padding-bottom: 1000px;
 	}
 	.step {
-		height: 20px;
-		padding: 0;
+		height: auto;
+		min-height: 20px;
+		padding: 10px 0;
 		margin: 0vh auto;
 		text-align: center;
-		pointer-events: none;
-/* 		border-top: 1px solid red; */
-}
-.step.active.time, .step.active .time {
-	font-weight: bold;
-	font-size: 15px;
-}
-.step:last-child {
-	padding-bottom: 80px;
-	margin-bottom: 0px;
-}
-.step.tick {
-	padding: 0;
-	text-align: right;
-	width: 100%;
-}
-.time {
-	width: calc(100% - 5px);
-	text-align: right;
-	margin-right: 5px;
-}
-.step p {
-	padding: 1rem;
-}
-.zoomContainer {
-	width: 100%;
-	height: 100vh;
-	transform-origin: top left;
-	backface-visibility: hidden;
-	perspective: 1000px;
-}
-.zoomContainer.loaded {
-	transition: transform var(--speed, 1s) ease-in-out;
-}
-.quotePanel {
-	position: fixed;
-	left: -300px;
-	top: 0px;
-	height: 100vh;
-	font-size: 13px;
-	padding: 20px;
-	width: 300px;
-	background: black;
-	color: white;
-	transition: all 200ms cubic-bezier(0.250, 0.100, 0.250, 1.000);
-	transition-timing-function: cubic-bezier(0.250, 0.100, 0.250, 1.000);
-	overflow: scroll;
-}
-.quotePanel.shown {
-	left: 0px;
-}
-.quotePanel .p2 {
-	color: #aaa;
-}
-.close {
-	width: 100%;
-	padding: 5px;
-	background: purple;
-	color:  white;
-	font-weight: bold;
-	text-align: center;
-	cursor: pointer;
-}
+/* 		pointer-events: none; */
+		font-size: 13px;
+	}
+	.step.active.time, .step.active .time {
+		font-weight: bold;
+		font-size: 15px;
+	}
+	.step:last-child {
+		padding-bottom: 80px;
+		margin-bottom: 0px;
+	}
+	.step.tick {
+		padding: 0;
+		text-align: right;
+		width: 100%;
+	}
+	.time {
+		width: calc(100% - 5px);
+		text-align: right;
+		margin-right: 5px;
+	}
+	.step p {
+		padding: 1rem;
+	}
+	.zoomContainer {
+		width: 100%;
+		height: 100vh;
+		transform-origin: top left;
+		backface-visibility: hidden;
+		perspective: 1000px;
+	}
+	.zoomContainer.loaded {
+		transition: transform var(--speed, 1s) ease-in-out;
+	}
+	.quotePanel {
+		position: fixed;
+		left: -300px;
+		top: 0px;
+		height: 100vh;
+		font-size: 13px;
+		padding: 20px;
+		width: 300px;
+		background: black;
+		color: white;
+		transition: all 200ms cubic-bezier(0.250, 0.100, 0.250, 1.000);
+		transition-timing-function: cubic-bezier(0.250, 0.100, 0.250, 1.000);
+		overflow: scroll;
+	}
+	.quotePanel.shown {
+		left: 0px;
+	}
+	.quotePanel .p2 {
+		color: #aaa;
+	}
+	.close {
+		width: 100%;
+		padding: 5px;
+		background: purple;
+		color:  white;
+		font-weight: bold;
+		text-align: center;
+		cursor: pointer;
+	}
 </style>

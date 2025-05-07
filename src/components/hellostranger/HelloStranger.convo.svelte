@@ -61,11 +61,11 @@
     }];
     
     // Cache color arrays to avoid recreating them on each render
-    const defaultColor = "#aaaaaa";
-    const affectPositiveColors = ["#d0844e","#e29546","#f0a839","#fabe28","#ffd500","#ffd500","#ffd500","#ffd500","#ffd500","#ffd500"];
-    const affectNeutralColor = "#aaaaaa";
-    const affectNegativeColors = ["#e54877","#bd3070","#951c66","#6d0b59","#460048","#460048","#460048","#460048","#460048","#460048"];
-    
+    const defaultColor = "#c2b0b6";
+    const affectPositiveColors = ["#d0caa4", "#d6c284", "#e1b766", "#efa94b", "#ff9734"];
+    const affectNeutralColor = "#c2b0b6";
+    const affectNegativeColors = ["#ab5add", "#be6bdd", "#cf7edd", "#dd91df", "#e9a5e2"];
+
     // Memoized color getter to improve performance
     const colorCache = new Map();
     function getAffectColor(val) {
@@ -75,13 +75,16 @@
             return colorCache.get(cacheKey);
         }
         
+        // Constrain values to the range -5 to +5
+        const constrainedVal = Math.max(-5, Math.min(5, val));
+        
         let color;
-        if (val === 0) {
+        if (constrainedVal === 0) {
             color = affectNeutralColor;
-        } else if (val < 0) {
-            color = affectNegativeColors[Math.min(Math.abs(val), affectNegativeColors.length - 1)];
+        } else if (constrainedVal < 0) {
+            color = affectNegativeColors[Math.min(Math.abs(constrainedVal), affectNegativeColors.length - 1)];
         } else {
-            color = affectPositiveColors[Math.min(Math.abs(val), affectPositiveColors.length - 1)];
+            color = affectPositiveColors[Math.min(Math.abs(constrainedVal), affectPositiveColors.length - 1)];
         }
         
         // Cache the result
@@ -137,9 +140,9 @@
         if (value !== prevValue) {
             quoteText = null;
             prevValue = value;
-            if (convoId == "0020a0c5-1658-4747-99c1-2839e736b481") {
-                console.log(convo)
-            }
+            // if (convoId == "0020a0c5-1658-4747-99c1-2839e736b481") {
+            //     console.log(convo)
+            // }
         }
     });
     

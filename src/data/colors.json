@@ -1,12 +1,12 @@
 {
 	"politics": {
-		"0": "#aaa",
-		"1": "#f55d42",
-		"2": "#cf7a6b",
-		"3": "#9b74ab",
-		"4": "#58b4d6",
-		"6": "#1f75ff"
+		"0": "#c2b0b6",
+		"1": "#d94a64",
+		"2": "#fab1bf",
+		"3": "#e4caed",
+		"4": "#a3d0e3",
+		"6": "#48afdb"
 	},
-	"race": {"american_indian_or_alaska_native": "#b8b261","asian":"#b53ed6","black_or_african_american": "#2eb9d9","hispanic_or_latino": "#96ab57","mixed":"#b8b261","native_hawaiian_or_pacific_islander":"#b8b261","other":"#b8b261","prefer_not_to_say":"#b8b261","white": "#c612cc"},
-	"edu": {"associate_degree":"#cf7a6b","bachelors_degree":"#58b4d6","completed_high_school":"#f55d42","doctoral_degree":"#1f75ff","masters_degree":"#1f75ff","professional_degree":"#1f75ff","some_college":"#cf7a6b","some_high_school":"#f55d42"}
+	"race": {"prefer_not_to_say":"#c2b0b6","other":"#c2b0b6","mixed":"#c2b0b6","native_hawaiian_or_pacific_islander":"#c695c9","american_indian_or_alaska_native": "#c695c9","asian":"#c695c9","black_or_african_american": "#95c6ed","hispanic_or_latino": "#9fe0cf","white": "#d9a97c"},
+	"edu": {"some_high_school":"#bf93cf","completed_high_school":"#bf93cf","some_college":"#e35db2","associate_degree":"#d4c994","bachelors_degree":"#e0a551","masters_degree":"#f2824e","doctoral_degree":"#f2824e","professional_degree":"#f2824e"}
 }
