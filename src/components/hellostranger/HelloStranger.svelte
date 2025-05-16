@@ -86,7 +86,7 @@
 		/// 0d7fc2a3-37b2-44b8-a60a-c69d6016b65e
 		/// 0c9e034f-2fdc-4ba8-b104-1fe709f786f5
 		// 725b5586-09b0-4701-a975-03bbd6b88edf
-		const zoomConvos = ["2f749ec2-aa7b-4a41-8aa1-5bd7a387b90a","22083989-6244-440b-af5b-93a3a10f6e04","0d7fc2a3-37b2-44b8-a60a-c69d6016b65e","0c9e034f-2fdc-4ba8-b104-1fe709f786f5","725b5586-09b0-4701-a975-03bbd6b88edf"];
+		const zoomConvos = ["2f749ec2-aa7b-4a41-8aa1-5bd7a387b90a","22083989-6244-440b-af5b-93a3a10f6e04","0d7fc2a3-37b2-44b8-a60a-c69d6016b65e","0c9e034f-2fdc-4ba8-b104-1fe709f786f5","725b5586-09b0-4701-a975-03bbd6b88edf","47e11fd0-9ceb-4ffa-ad74-0203e28427b3"];
 
 	    // Set w and h to your fixed values
 	    w = 60;  // Fixed width
@@ -659,10 +659,10 @@
 	});
 
 </script>
-<div class="debug">{sortCategory} {value}</div>
+<div class="debug">{sortCategory} // {personColor} // {value}</div>
 <div id="content">
 	<section id="scrolly">
-		<div class="visualContainer" bind:this={peopleContainer}>
+		<div class="visualContainer" bind:this={peopleContainer} class:zoomed={zoomPerson}>
 			<div
 			class="zoomContainer {hasLoaded ? 'loaded' : ''}"
 			style="transform: translate3d({zoomContainerData.x}px, {zoomContainerData.y}px, 0) scale3d({zoomContainerData.scale}, {zoomContainerData.scale}, 1);
@@ -707,11 +707,10 @@
 	</div>
 
 	<div class="timeline">
-		<Scrolly bind:value top={chartHeight - 50}>
+		<Scrolly increments={1} linePosition={0.9} showLine={false} bind:value>
 			{#each timeRange as time, i}
 			{@const active = value === i}
-			{#if checkCopy(time).quotePerson == null}
-			{#if checkCopy(time) == false || checkCopy(time).time==0}
+			{#if checkCopy(time) == false || checkCopy(time).time==0 || checkCopy(time).quotePerson != null}
 			<div class="step time" class:active>
 				{convertTime(time)}
 			</div>
@@ -720,7 +719,6 @@
 				<div class="time">{convertTime(time)}</div>
 				<Text copy={checkCopy(time).text} time={convertTime(time)} />
 			</div>
-			{/if}
 			{/if}
 			{/each}
 		</Scrolly>
@@ -758,39 +756,10 @@
 	.timeline {
 		position: relative;
 		z-index: 100;
-/* 		pointer-events: none; */
+		pointer-events: none;
 		padding-bottom: 1000px;
 	}
-	.step {
-		height: auto;
-		min-height: 20px;
-		padding: 10px 0;
-		margin: 0vh auto;
-		text-align: center;
-/* 		pointer-events: none; */
-		font-size: 13px;
-	}
-	.step.active.time, .step.active .time {
-		font-weight: bold;
-		font-size: 15px;
-	}
-	.step:last-child {
-		padding-bottom: 80px;
-		margin-bottom: 0px;
-	}
-	.step.tick {
-		padding: 0;
-		text-align: right;
-		width: 100%;
-	}
-	.time {
-		width: calc(100% - 5px);
-		text-align: right;
-		margin-right: 5px;
-	}
-	.step p {
-		padding: 1rem;
-	}
+	
 	.zoomContainer {
 		width: 100%;
 		height: 100vh;

@@ -50,46 +50,54 @@
     // Precompute affect differences to avoid recalculations during renders
     const affectDiff = [{
         "pre_affect": startNum,
-        "begin_affect": p1.begin_affect - (p1.begin_affect || 0) + startNum,
-        "middle_affect": p1.middle_affect - (p1.begin_affect || 0) + startNum,
-        "end_affect": p1.end_affect - (p1.begin_affect || 0) + startNum
+        "begin_affect": p1.begin_affect - (p1.pre_affect || 0) + startNum,
+        "middle_affect": p1.middle_affect - (p1.pre_affect || 0) + startNum,
+        "end_affect": p1.end_affect - (p1.pre_affect || 0) + startNum
     },{
         "pre_affect": startNum,
-        "begin_affect": p2.begin_affect - (p2.begin_affect || 0) + startNum,
-        "middle_affect": p2.middle_affect - (p2.begin_affect || 0) + startNum,
-        "end_affect": p2.end_affect - (p2.begin_affect || 0) + startNum
+        "begin_affect": p2.begin_affect - (p2.pre_affect || 0) + startNum,
+        "middle_affect": p2.middle_affect - (p2.pre_affect || 0) + startNum,
+        "end_affect": p2.end_affect - (p2.pre_affect || 0) + startNum
     }];
     
     // Cache color arrays to avoid recreating them on each render
     const defaultColor = "#c2b0b6";
-    const affectPositiveColors = ["#d0caa4", "#d6c284", "#e1b766", "#efa94b", "#ff9734"];
+    // const affectPositiveColors = ["#d0caa4", "#d6c284", "#e1b766", "#efa94b", "#ff9734"];
+    const affectPositiveColors = ["#b4c97d"];
     const affectNeutralColor = "#c2b0b6";
-    const affectNegativeColors = ["#ab5add", "#be6bdd", "#cf7edd", "#dd91df", "#e9a5e2"];
+    // const affectNegativeColors = ["#ab5add", "#be6bdd", "#cf7edd", "#dd91df", "#e9a5e2"];
+    const affectNegativeColors = ["#bf7cb3"];
+    // const allColors = ["#ab5add", "#be6bdd", "#cf7edd", "#dd91df", "#e9a5e2", affectNeutralColor,"#d0caa4", "#d6c284", "#e1b766", "#efa94b", "#ff9734"]
+    const allColors = ["#ab5add", "#cf7edd",affectNeutralColor,"#e1b766", "#ff9734"]
 
     // Memoized color getter to improve performance
     const colorCache = new Map();
-    function getAffectColor(val) {
+    function getAffectColor(val, category) {
         // Return from cache if available
         const cacheKey = String(val);
         if (colorCache.has(cacheKey)) {
             return colorCache.get(cacheKey);
         }
         
-        // Constrain values to the range -5 to +5
-        const constrainedVal = Math.max(-5, Math.min(5, val));
-        
-        let color;
-        if (constrainedVal === 0) {
-            color = affectNeutralColor;
-        } else if (constrainedVal < 0) {
-            color = affectNegativeColors[Math.min(Math.abs(constrainedVal), affectNegativeColors.length - 1)];
+        if (category == "raw") {
+            return allColors[Math.round(val / 10 * allColors.length) - 1];
         } else {
-            color = affectPositiveColors[Math.min(Math.abs(constrainedVal), affectPositiveColors.length - 1)];
-        }
-        
+            // Constrain values to the range -5 to +5
+            const constrainedVal = Math.max(-5, Math.min(5, val));
+
+            let color;
+            if (constrainedVal === 0) {
+                color = affectNeutralColor;
+            } else if (constrainedVal < 0) {
+                color = affectNegativeColors[Math.min(Math.abs(constrainedVal), affectNegativeColors.length - 1)];
+            } else {
+                color = affectPositiveColors[Math.min(Math.abs(constrainedVal), affectPositiveColors.length - 1)];
+            }
+
         // Cache the result
-        colorCache.set(cacheKey, color);
-        return color;
+            colorCache.set(cacheKey, color);
+            return color;
+        }
     }
     
     let quoteText = $state(null);
@@ -102,36 +110,44 @@
     // Calculate transform values once to avoid repeated string concatenation
     // This reduces layout thrashing during animations
     let p1Transform = $derived(
-    `translate3d(${sortMode === 'person' ? p1state?.x || 0 : convoState?.x || 0}px, ` +
-    `${sortMode === 'person' ? p1state?.y || 0 : convoState?.y || 0}px, 0)`
-    );
+`translate3d(${sortMode === 'person' ? p1state?.x || 0 : convoState?.x || 0}px, ` +
+`${sortMode === 'person' ? p1state?.y || 0 : convoState?.y || 0}px, 0)`
+);
     let p2Transform = $derived(
-    `translate3d(${sortMode === 'person' ? p2state?.x || 0 : (convoState?.x || 0) + (convoState?.w || 0) / 2}px, ` +
-    `${sortMode === 'person' ? p2state?.y || 0 : convoState?.y || 0}px, 0)`
-    );
+`translate3d(${sortMode === 'person' ? p2state?.x || 0 : (convoState?.x || 0) + (convoState?.w || 0) / 2}px, ` +
+`${sortMode === 'person' ? p2state?.y || 0 : convoState?.y || 0}px, 0)`
+);
 
     // Precompute scale values for transforms rather than changing heights
 
     let p1Scale = $derived(affectColumns.includes(personColor) ? 
-    `scaleY(${(p1[personColor] || 0) / 10})` : 
-    "scaleY(1)"
-    );
+`scaleY(${(p1[personColor] || 0) / 10})` : 
+"scaleY(1)"
+);
 
     let p2Scale = $derived(affectColumns.includes(personColor) ? 
-    `scaleY(${(p2[personColor] || 0) / 10})` : 
-    "scaleY(1)"
-    );
-    
+`scaleY(${(p2[personColor] || 0) / 10})` : 
+"scaleY(1)"
+);
+
     // Precompute background colors
     let p1BackgroundColor = $derived(
+        sortCategory === "raw" ? 
+            // When sortCategory is "raw", use direct personColor value
+        getAffectColor(p1[personColor] || 0, sortCategory) || defaultColor :
+            // Otherwise use the existing logic
         affectColumns.includes(personColor) ? 
-        getAffectColor(affectDiff[0][personColor]) || defaultColor : 
+        getAffectColor(affectDiff[0][personColor], sortCategory) || defaultColor : 
         (colors[personColor] ? colors[personColor][p1data?.[personColor]] : defaultColor) || defaultColor
         );
-    
+
     let p2BackgroundColor = $derived(
+        sortCategory === "raw" ? 
+            // When sortCategory is "raw", use direct personColor value
+        getAffectColor(p2[personColor] || 0, sortCategory) || defaultColor :
+            // Otherwise use the existing logic
         affectColumns.includes(personColor) ? 
-        getAffectColor(affectDiff[1][personColor]) || defaultColor : 
+        getAffectColor(affectDiff[1][personColor], sortCategory) || defaultColor : 
         (colors[personColor] ? colors[personColor][p2data?.[personColor]] : defaultColor) || defaultColor
         );
     

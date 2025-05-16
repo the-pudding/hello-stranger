@@ -76,6 +76,7 @@ $effect(() => {
     class="person person{number}"
     class:fadeOut={!isVisible}
     class:selected={isSelected}
+    class:talking={personState.quoteText}
     style="
         height: {h}px;
         width: {w}px;
@@ -100,29 +101,7 @@ $effect(() => {
 </div>
 
 <style>
-    .quote {
-        position: absolute;
-        top: calc(100% + 10px);
-        left: 50%;
-        transform: translateX(-50%);
-        background: black;
-        color: white;
-        max-width: 200px;
-        min-width: 60px;
-        padding: 5px;
-        font-size: 8px;
-    }
-    .quote:after {
-        content: "";
-        width: 0; 
-      height: 0; 
-      border-left: 6px solid transparent;
-      border-right: 6px solid transparent;
-      border-bottom: 6px solid black;
-      position: absolute;
-      bottom: 100%;
-      left: calc(50% - 3px);
-    }
+    
     .catData {
         position: absolute;
         right: 0;
@@ -182,7 +161,10 @@ $effect(() => {
         border: 3px solid #ff6600; /* Bright orange border */
         box-shadow: 0 0 10px rgba(255, 102, 0, 0.7); /* Optional glow effect */
     }
-    
+    .person.talking {
+         z-index: 99;
+         box-shadow: 0 0 10px #e373ff;
+    }
     .backgroundColor {
         position: absolute;
         left: 0;
@@ -190,7 +172,7 @@ $effect(() => {
         width: 100%;
         height: 100%;
         transform-origin: bottom;
-        transition: transform 1s ease-in-out, background 1s ease-in-out;
+        transition: transform 2s ease-in-out, background 2s ease-in-out;
         will-change: transform, background;
     }
     

@@ -8,40 +8,40 @@
 	/* font */
 	--sans: "Atlas Grotesk", -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
 /* 	--serif: "Tiempos Text", Iowan Old Style, Times New Roman, Times, serif; */
-	--serif: Times New Roman, Times, serif;
-	--mono: Menlo, Consolas, Monaco, monospace;
+--serif: Times New Roman, Times, serif;
+--mono: Menlo, Consolas, Monaco, monospace;
 
-	/* z-index */
-	--z-bottom: -100;
-	--z-middle: 0;
-	--z-top: 100;
-	--z-overlay: 1000;
+/* z-index */
+--z-bottom: -100;
+--z-middle: 0;
+--z-top: 100;
+--z-overlay: 1000;
 
-	/* presets (used in reset.css) */
-	--border-radius: 2px;
-	--font-body: var(--serif);
-	--font-form: var(--sans);
-	--color-bg: var(--color-white);
-	--color-fg: var(--color-gray-900);
-	--color-primary: var(--color-black);
-	--color-link: var(--color-black);
-	--color-link-hover: var(--color-black);
-	--color-focus: var(--color-red);
-	--color-mark: var(--color-yellow);
-	--color-selection: var(--color-gray-300);
-	--color-border: var(--color-gray-300);
-	--color-button-bg: var(--color-gray-300);
-	--color-button-fg: var(--color-gray-900);
-	--color-button-hover: var(--color-gray-400);
-	--color-input-bg: var(--color-gray-50);
-	--color-input-fg: var(--color-gray-900);
-	--color-placeholder: var(--color-gray-500);
+/* presets (used in reset.css) */
+--border-radius: 2px;
+--font-body: var(--serif);
+--font-form: var(--sans);
+--color-bg: var(--color-white);
+--color-fg: var(--color-gray-900);
+--color-primary: var(--color-black);
+--color-link: var(--color-black);
+--color-link-hover: var(--color-black);
+--color-focus: var(--color-red);
+--color-mark: var(--color-yellow);
+--color-selection: var(--color-gray-300);
+--color-border: var(--color-gray-300);
+--color-button-bg: var(--color-gray-300);
+--color-button-fg: var(--color-gray-900);
+--color-button-hover: var(--color-gray-400);
+--color-input-bg: var(--color-gray-50);
+--color-input-fg: var(--color-gray-900);
+--color-placeholder: var(--color-gray-500);
 /* 	--bgcolor: #28212F; */
-	--bgcolor: #fff;
-	--color-light:  #fff;
+--bgcolor: #fff;
+--color-light:  #fff;
 
-	/* "1" second duration */
-	--1s: 1ms;
+/* "1" second duration */
+--1s: 1ms;
 }
 
 /* dark theme */
@@ -91,11 +91,11 @@ svg {
 }
 
 #content {
-/* 	font-family: var(--sans) !important; */
-	font-family:  var(--mono);
-	background: var(--bgcolor);
+	font-family: var(--sans) !important;
+/* 	font-family:  var(--mono); */
+background: var(--bgcolor);
 /* 	color: var(--color-light); */
-	color: black;
+color: black;
 }
 .visualContainer {
 	position: sticky;
@@ -117,8 +117,9 @@ svg {
 	padding: 5px 20px;
 	text-align: left;
 }
-.time {
-	font-size: 14px;
+
+.step.time {
+	font-size: 12px;
 }
 
 .sprite {
@@ -128,4 +129,117 @@ svg {
 	position: absolute;
 	left: 0;
 	top: 0;
+}
+
+.step {
+	height: auto;
+	min-height: 30px;
+	padding: 0px 0;
+	margin: 0vh auto;
+	text-align: center;
+	font-size: 15px;
+}
+.step.bigText {
+  background: #fff;
+  padding: 20vh 0;
+  position: relative;
+}
+/* .step.bigText.active .time {
+	font-size: 15px;
+	font-weight: bold;
+} */
+
+/* Top gradient - transparent to white */
+.step.bigText::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  width: 100%;
+  height: 300px;
+  z-index: -1;
+  background: linear-gradient(to bottom, transparent 0%, white 100%);
+}
+
+/* Bottom gradient - white to transparent */
+.step.bigText::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  height: 300px;
+  z-index: -1;
+  background: linear-gradient(to top, transparent 0%, white 100%);
+}
+.step.bigText .textContainer {
+	background: #fff;
+	border:  none;
+	color: black;
+	width: 95%;
+	max-width: 620px;
+}
+.step.active.time, .step.active .time {
+	font-weight: bold;
+	font-size: 15px;
+}
+.step:last-child {
+	padding-bottom: 80px;
+	margin-bottom: 0px;
+}
+.step.tick {
+	padding: 0;
+	text-align: right;
+	width: 100%;
+}
+.time {
+	width: calc(100% - 5px);
+	text-align: right;
+	margin-right: 5px;
+	z-index: 10;
+	font-size: 12px;
+}
+/* .step p {
+	padding: 1rem;
+} */
+.step .note {
+	font-size: 12px;
+	color:  #999;
+	margin-top: 5px;
+	padding: 10px 0;
+}
+.step .note a {
+	color:  #7c4091;
+	text-decoration: none;
+/* 	border-bottom: 1px dotted #aaa; */
+}
+
+.quote {
+	position: absolute;
+	top: calc(100% + 10px);
+	left: 50%;
+	transform: translateX(-50%);
+	background: black;
+	color: white;
+	max-width: 200px;
+	min-width: 60px;
+	padding: 5px;
+	font-size: 10px;
+	transition: all 2000ms cubic-bezier(0.420, 0.000, 0.580, 1.000); /* ease-in-out */
+	transition-timing-function: cubic-bezier(0.420, 0.000, 0.580, 1.000); /* ease-in-out */
+}
+.quote:after {
+	content: "";
+	width: 0; 
+	height: 0; 
+	border-left: 6px solid transparent;
+	border-right: 6px solid transparent;
+	border-bottom: 6px solid black;
+	position: absolute;
+	bottom: 100%;
+	left: calc(50% - 3px);
+}
+
+.zoomed .quote {
+	font-size: 8px;
 }
