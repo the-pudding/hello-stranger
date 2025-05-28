@@ -1,8 +1,8 @@
 <script>
 	let {
-		title = "Title TK",
+		title = "30 minutes with a stranger",
 		description = "Description TK",
-		url = "https://pudding.cool",
+		url = "https://pudding.cool/2025/06/stranger",
 		keywords = "",
 		preloadFont = []
 	} = $props();
