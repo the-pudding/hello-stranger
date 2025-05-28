@@ -15,10 +15,18 @@
   let commonSymbols = 'abcdefghijklmnopqrstuvwxyz1234567890--=+_)(*&^%$#@!|}{;:\'"?.>,<■□▢▣▤▥▦▧▨▩▪▫▬▭▮▯▰▱▲△▴▵▶▷▸▹►▻▼▽▾▿◀◁◂◃◄◅◆◇◈◉◊○◌◍◎●◐◑◒◓◔◕◖◗◘◙◚◛◜◝◞◟◠◡◢◣◤◥◦◧◨◩◪◫◬◭◮◯◰◱◲◳◴◵◶◷◸◹◺◻◼◽◾◿';
   let selectedSymbol = '■'; // Default selected symbol
   let isPainting = false; // Track if we're in painting mode
+  let isErasing = false; // Track if we're in erasing mode
   
   // Get cell index from row/col
   function getCellIndex(row, col) {
     return row * cols + col;
+  }
+
+  function escapeString(str) {
+    return str
+      .replace(/\\/g, '\\\\')  // Escape backslashes first
+      .replace(/"/g, '\\"')    // Escape double quotes
+      .replace(/'/g, "\\'");   // Escape single quotes
   }
   
   // Update the textarea
@@ -32,9 +40,12 @@
         }
         lines.push(line);
       }
-      textareaElement.value = lines.join('\\n');
+      // Escape the entire string before joining with \n
+      let escapedOutput = lines.map(line => escapeString(line)).join('\\n');
+      textareaElement.value = escapedOutput;
     }
   }
+  
   
   // Update the ASCII preview
   function updatePreview() {
@@ -84,25 +95,37 @@
   }
   
   // Handle a cell click
-  function handleCellClick(row, col) {
+  function handleCellClick(event, row, col) {
     setActiveCell(row, col);
-    // Paint the selected symbol when clicking
-    setCellChar(row, col, selectedSymbol);
-    // Start painting mode
-    isPainting = true;
+    
+    // If right mouse button was clicked (button 2), erase the cell
+    if (event.button === 2) {
+      setCellChar(row, col, ' ');
+      // Start erasing mode
+      isErasing = true;
+    } else {
+      // Otherwise paint with the selected symbol when clicking
+      setCellChar(row, col, selectedSymbol);
+      // Start painting mode
+      isPainting = true;
+    }
   }
   
-  // Handle mouse enter event on a cell (for painting)
+  // Handle mouse enter event on a cell (for painting/erasing)
   function handleCellMouseEnter(row, col) {
     if (isPainting) {
       // Paint the selected symbol when dragging
       setCellChar(row, col, selectedSymbol);
+    } else if (isErasing) {
+      // Erase when dragging with right button held
+      setCellChar(row, col, ' ');
     }
   }
   
-  // Handle mouse up event (to stop painting)
+  // Handle mouse up event (to stop painting/erasing)
   function handleMouseUp() {
     isPainting = false;
+    isErasing = false;
   }
   
   // Set a cell's character
@@ -199,6 +222,14 @@
     updateCounter++;
   }
   
+// Unescape quotes and backslashes in a string
+  function unescapeString(str) {
+    return str
+      .replace(/\\'/g, "'")    // Unescape single quotes
+      .replace(/\\"/g, '"')    // Unescape double quotes
+      .replace(/\\\\/g, '\\'); // Unescape backslashes last
+  }
+  
   // Process string with escaped newlines into the grid
   function processImportString() {
     if (!importTextarea || !importTextarea.value) return;
@@ -211,7 +242,8 @@
     
     // Fill the grid with the imported data
     for (let row = 0; row < rows && row < lines.length; row++) {
-      const line = lines[row];
+      // Unescape the line before processing
+      const line = unescapeString(lines[row]);
       for (let col = 0; col < cols && col < line.length; col++) {
         newGrid[getCellIndex(row, col)] = line[col];
       }
@@ -310,25 +342,46 @@
     }
   }
   
+  // Prevent context menu from appearing on right-click in grid
+  function handleContextMenu(event) {
+    // Prevent the context menu if this is within the grid
+    if (event.target.classList.contains('grid-cell')) {
+      event.preventDefault();
+    }
+  }
+  
   onMount(() => {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('click', handleGlobalClick);
     window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('contextmenu', handleContextMenu);
     
     // Initialize the preview and textarea
     updatePreview();
     updateTextarea();
     
+    // Add note about right-click erase feature
+    const container = document.querySelector('.container');
+    if (container) {
+      const instructions = document.createElement('div');
+      instructions.className = 'instructions';
+      instructions.textContent = 'Left click to draw, right click to erase. Click and drag to paint/erase multiple cells.';
+      container.insertBefore(instructions, container.firstChild.nextSibling);
+    }
+    
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('click', handleGlobalClick);
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('contextmenu', handleContextMenu);
     };
   });
 </script>
 
 <div class="container">
   <h2>ASCII editor</h2> 
+  <!-- Instructions will be inserted here by JS -->
+  
   <!-- Import Section -->
   <div class="import-section">
     <!-- <h3>Import ASCII Art</h3> -->
@@ -384,7 +437,7 @@
                   class="grid-cell" 
                   data-row={row} 
                   data-col={col}
-                  on:mousedown={() => handleCellClick(row, col)}
+                  on:mousedown={(event) => handleCellClick(event, row, col)}
                   on:mouseenter={() => handleCellMouseEnter(row, col)}
                 >{gridData[getCellIndex(row, col)]}</div>
               {/each}
@@ -431,15 +484,19 @@
     text-align: center;
     margin-bottom: 10px;
     color: #666;
+    padding: 5px;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    font-style: italic;
   }
   
   .symbol-status {
     text-align: center;
     margin-bottom: 20px;
     padding: 5px;
-    background-color: #f0f0f0;
+    background-color: var(--bg-color);
     border-radius: 4px;
-    border: 1px solid #ddd;
+/*     border: 1px solid #ddd; */
   }
   
   .selected-symbol {
@@ -592,14 +649,14 @@
   .grid-cell {
     width: 30px;
     height: 30px;
-    border: 1px solid #ccc;
+    border: 1px solid rgba(255,255,255,0.1);
     display: flex;
     align-items: center;
     justify-content: center;
     font-family: monospace;
     font-size: 20px;
     cursor: crosshair;
-    background-color: #f9f9f9;
+    background-color: var(--bg-color);
     user-select: none;
   }
   
@@ -627,7 +684,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #f9f9f9;
+    background-color: var(--bg-color);
     overflow: hidden;
     padding: 0;
   }

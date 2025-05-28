@@ -1,0 +1,48 @@
+{
+	"politics": {
+		"1": "Very conservative",
+		"2": "Conservative",
+		"3": "Centrist/Neutral",
+		"4": "Liberal",
+		"6": "Very liberal"
+	},
+	"race": {
+		"white": "White",
+		"mixed": "Mixed race",
+		"asian": "Asian",
+		"hispanic_or_latino": "Hispanic or Latino",
+		"black_or_african_american": "Black or African-American",
+		"nan": "--",
+		"native_hawaiian_or_pacific_islander": "Hawaiian or Pacific Islander",
+		"american_indian_or_alaska_native": "American Indian or Alaska Native",
+		"other": "Other",
+		"prefer_not_to_say": "--"
+	},
+	"edu": {
+		"bachelors_degree": "Bachelor's Degree",
+		"masters_degree": "Master's Degree",
+		"some_college": "Some College",
+		"completed_high_school": "High School Graduate",
+		"associate_degree": "Associate Degree",
+		"nan": "Not Specified",
+		"professional_degree": "Professional Degree",
+		"some_high_school": "Some High School",
+		"doctoral_degree": "Doctoral Degree"
+	},
+	"employ": {
+		"1": "Employed",
+		"2": "Unemployed",
+		"3": "Temporary on leave",
+		"4": "Disabled",
+		"5": "Retired",
+		"6": "Homemaker",
+		"7": "Other"
+	},
+	"likert": {
+		"1": "Disagree strongly",
+		"2": "Disagree a little",
+		"3": "Neutral; no opinion",
+		"4": "Agree a little",
+		"5": "Agree strongly"
+	}
+}
