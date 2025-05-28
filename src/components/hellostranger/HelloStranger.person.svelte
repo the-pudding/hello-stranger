@@ -81,8 +81,8 @@ let currentAsciiArt = $state('');
 const sex = (data?.sex === 'male' || data?.sex === 'female') 
   ? data.sex 
   : Math.random() > 0.5 ? 'male' : 'female';
-// const color = personData.race === "white" || personData.race === "asian" ? Math.abs(personKey.split('').reduce((h, c) => h + c.charCodeAt(0), 0) % 2) : personData.race === "black_or_african_american" ? 3 + Math.abs(personKey.split('').reduce((h, c) => h + c.charCodeAt(0), 0) % 2) : personData.race === "hispanic_or_latino" ? 2 + Math.abs(personKey.split('').reduce((h, c) => h + c.charCodeAt(0), 0) % 2) : personData.race === "native_hawaiian_or_pacific_islander" || personData.race === "american_indian_or_alaska_native" ? 2 : Math.abs(personKey.split('').reduce((h, c) => h + c.charCodeAt(0), 0) % 5);
-const color = 0;
+const color = personData.race === "white" || personData.race === "asian" ? Math.abs(personKey.split('').reduce((h, c) => h + c.charCodeAt(0), 0) % 2) : personData.race === "black_or_african_american" ? 3 + Math.abs(personKey.split('').reduce((h, c) => h + c.charCodeAt(0), 0) % 2) : personData.race === "hispanic_or_latino" ? 2 + Math.abs(personKey.split('').reduce((h, c) => h + c.charCodeAt(0), 0) % 2) : personData.race === "native_hawaiian_or_pacific_islander" || personData.race === "american_indian_or_alaska_native" ? 2 : Math.abs(personKey.split('').reduce((h, c) => h + c.charCodeAt(0), 0) % 5);
+// const color = 0;
 const numMax = 3; // this means the generator has 1 possible sprite(s) for this sex and color 
 const num = Math.abs(Array.from(personKey || '').reduce((hash, char) => ((hash << 5) - hash) + char.charCodeAt(0), 0) % numMax);
 // Animation for ASCII sprite cycling
@@ -232,9 +232,9 @@ $effect(() => {
         margin: 0;
         padding: 0;
         font-family: inherit;
-        line-height: 0.45;
-        font-size: 1.11em;
-        letter-spacing: -0.15em;
+        line-height: 0.5;
+        font-size: 1em;
+        letter-spacing: -0.1em;
     }
     .person2 .asciiContainer pre {
          transform: scaleX(-1);
