@@ -814,7 +814,7 @@ const panelVarsLabels = {
 			</div>
 		{#if isAtTop}
 		<div class="headline" transition:fade>
-			<h1>hello, stranger</h1>
+			<h1>30 minutes with a stranger</h1>
 			<div class="byline">by <a href="https://pudding.cool/author/alvin-chang/">alvin chang</a></div>
 		</div>
 		{/if}
