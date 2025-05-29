@@ -7,8 +7,8 @@
 :root {
 	/* font */
 	--sans: "Atlas Grotesk", -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
-/* 	--serif: "Tiempos Text", Iowan Old Style, Times New Roman, Times, serif; */
---serif: Times New Roman, Times, serif;
+	--serif: "Tiempos Text", Iowan Old Style, Times New Roman, Times, serif;
+/* --serif: Times New Roman, Times, serif; */
 --mono: Menlo, Consolas, Monaco, monospace;
 
 /* z-index */
@@ -67,11 +67,13 @@
 --button-text-color: white;
 
 --person-color: black;
---person-default-bg: #c49dbb;
---person-hl-color: #d500ff;
+--person-default-bg: #ad92a8;
+--person-hl-color: #e9eb7f;
+
 
 --quote-bg:  #fcccf3;
 --quote-text-color: #33003d;
+--quote-hl-color: #f76fde;
 /* "1" second duration */
 --1s: 1ms;
 }
@@ -123,7 +125,7 @@ svg {
 }
 
 #content {
-	font-family: var(--sans) !important;
+	font-family: var(--serif) !important;
 /* 	font-family:  var(--mono); */
 background: var(--bgcolor);
 /* 	color: var(--color-light); */
@@ -170,17 +172,20 @@ color: var(--text-color);
 	margin: 0vh auto;
 	text-align: center;
 	font-size: 15px;
+	line-height: 22px;
 }
 .step.bigText {
   background: var(--bigtext-bg);
   padding: 20vh 0;
+  min-height: 100vh;
   position: relative;
 }
 .step a {
 	color: var(--text-link-color);
 }
 .byline a {
-	color: var(--text-link-color)
+	color: var(--text-link-color);
+	text-decoration: none;
 }
 /* .step.bigText.active .time {
 	font-size: 15px;
@@ -194,7 +199,7 @@ color: var(--text-color);
   bottom: 100%;
   left: 0;
   width: 100%;
-  height: 300px;
+  height: 50vh;
   z-index: -1;
   background: linear-gradient(to bottom, transparent 0%, var(--bigtext-bg) 100%);
 }
@@ -206,7 +211,7 @@ color: var(--text-color);
   top: 100%;
   left: 0;
   width: 100%;
-  height: 300px;
+  height: 50vh;
   z-index: -1;
   background: linear-gradient(to top, transparent 0%, var(--bigtext-bg) 100%);
 }
@@ -242,6 +247,7 @@ color: var(--text-color);
 } */
 .step .note {
 	font-size: 12px;
+	line-height: 1.3em;
 	color:  var(--text-note-color);
 	margin-top: 5px;
 	padding: 10px 0;
@@ -251,7 +257,24 @@ color: var(--text-color);
 	text-decoration: none;
 /* 	border-bottom: 1px dotted #aaa; */
 }
-
+.step span {
+	padding: 0 2px;
+	margin: 0 2px;
+	border-radius: 2px;
+	/* font-weight: bold; */
+}
+.step .yellow {
+	background: #ede977;
+	color: black;
+}
+.step .brown {
+	background: #706267;
+	/* color: black; */
+}
+.step .purple {
+	background: #845aad;
+	/* color: black; */
+}
 .quote {
 	position: absolute;
 	top: calc(100% + 10px);
@@ -260,9 +283,13 @@ color: var(--text-color);
 	background: var(--quote-bg);
 	color: var(--quote-text-color);
 	max-width: 200px;
-	min-width: 60px;
-	padding: 5px;
-	font-size: 10px;
+	min-width: 80px;
+	min-height:  50px;
+	padding: 5px 10px 5px 5px;
+	font-size: 12px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 /* 	transition: all 2000ms cubic-bezier(0.420, 0.000, 0.580, 1.000); 
 	transition-timing-function: cubic-bezier(0.420, 0.000, 0.580, 1.000); */
 }
@@ -280,5 +307,5 @@ color: var(--text-color);
 }
 
 .zoomed .quote {
-	font-size: 8px;
+	font-size: 10px;
 }

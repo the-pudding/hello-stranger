@@ -28,7 +28,8 @@ let zoomPerson = $state(copy.copy[value].zoomPerson);
 let personColor = $state(copy.copy[value].personColor);
 let quotePerson = $state(copy.copy[value].quotePerson);
 let currentText = $state(copy.copy[value].text);
-let quoteState = $state([null,null,null,null,null,null]);
+let currentTime = $state(copy.copy[value].time);
+let quoteState = $state(null);
 let zoomDisable = $state(copy.copy[value].zoomDisable);
 // Track the selected person ID instead of convo
 let selectedPersonId = $state(null);
@@ -38,6 +39,7 @@ const zoomSpeed = 2;
 // Add scroll position tracking
 let scrollY = $state(0);
 let isAtTop = $state(true);
+let nextTime = $state(0);
 
 // Function to update scroll position
 function updateScrollPosition() {
@@ -122,9 +124,6 @@ function filterConvos() {
   filteredConvos = Object.fromEntries(selectedConvos);
   totalConvos = selectedConvos.length;
   
-  // Log the number of conversations being displayed for debugging
-  // console.log(`Filtered to ${totalConvos} conversations (max: ${maxCells})`);
-  
   return layoutParams;
 }
 
@@ -192,6 +191,9 @@ function toTitleCase(str) {
 // Update the category function to ensure sortMode and sortCategory are in sync
 function updateCategory() {
   const latestItem = [...copy.copy].reverse().find(item => item.time <= value);
+  const latestIndex = copy.copy.findIndex(item => item === latestItem);
+  nextTime = latestIndex > 0 && copy.copy[latestIndex + 1] ? Number(copy.copy[latestIndex + 1].time) : null;
+  
   const newSortCategory = latestItem?.var ?? null;
   const newZoomPerson = latestItem?.zoomPerson ?? null;
   const newPersonColor = latestItem?.personColor ?? null;
@@ -199,7 +201,7 @@ function updateCategory() {
   const newQuotePerson = latestItem?.quotePerson ?? null;
   const newCurrentText = latestItem?.text ?? null;
   const newZoomDisable = latestItem?.zoomDisable ?? null;
-
+  const newCurrentTime = Number(latestItem?.time) ?? null;
   // Only update if values are different
   let needsUpdate = false;
   
@@ -225,6 +227,11 @@ function updateCategory() {
 
   if (newCurrentText !== currentText) {
     currentText = newCurrentText;
+    needsUpdate = true;
+  }
+
+  if (newCurrentTime !== currentTime) {
+    currentTime = newCurrentTime;
     needsUpdate = true;
   }
 
@@ -514,9 +521,7 @@ function updateSize() {
   if (newWidth === chartWidth && newHeight === chartHeight) {
     return;
   }
-  
-  // console.log("Size changed:", newWidth, "x", newHeight, "(was", chartWidth, "x", chartHeight, ")");
-  
+
   // Update dimensions
   chartWidth = newWidth;
   chartHeight = newHeight;
@@ -565,7 +570,6 @@ function debouncedResize() {
   }
 
   resizeTimeout = setTimeout(() => {
-    // console.log("Executing debounced resize...");
     updateSize();
     
     // Double-check after a delay to ensure proper rendering
@@ -576,7 +580,6 @@ function debouncedResize() {
       
       // If we could display more than we are, force another update
       if (currentDisplayed < maxCells && currentDisplayed < Object.keys(convos).length) {
-        // console.log(`Display mismatch: showing ${currentDisplayed}/${maxCells} possible. Refreshing...`);
         updateSize();
       }
     }, 300);
@@ -612,11 +615,11 @@ function convertTime(time) {
   const seconds = Math.floor(time % 60);
 
   // Format minutes and seconds without padStart
-  const formattedMinutes = minutes < 10 ? "0" + minutes : minutes;
-  const formattedSeconds = seconds < 10 ? "0" + seconds : seconds;
+  // const formattedMinutes = minutes < 10 ? "0" + minutes : minutes;
+  // const formattedSeconds = seconds < 10 ? "0" + seconds : seconds;
 
   // Return in MM:SS format
-  return formattedMinutes + ":" + formattedSeconds;
+  return minutes + "m " + seconds +"s";
 }
 
 // Setup handlers in onMount
@@ -808,6 +811,9 @@ const panelVarsLabels = {
 			        {chartWidth}
 			        {chartHeight}
 			        {sortCategory}
+              {quotePerson}
+              {currentTime}
+              {nextTime}
 			      />
 			    {/each}
 			  {/if}
@@ -831,7 +837,7 @@ const panelVarsLabels = {
 			{:else}
 			<div class="step {checkCopy(time).addclass ? checkCopy(time).addclass : 'smallText'}" class:active>
 				<div class="time">{convertTime(time)}</div>
-				<Text copy={checkCopy(time).text} time={convertTime(time)} />
+				<Text copy={checkCopy(time).text} time={convertTime(time)} legend={checkCopy(time).legend}/>
 			</div>
 			{/if}
 			{/each}
@@ -902,7 +908,9 @@ const panelVarsLabels = {
 		width: 100%;
 	}
 	.headline h1 {
-		font-size: 17px;
+		font-size: 18px;
+    color: white;
+    /* font-weight: bold; */
 	}
 	.timeline {
 		position: relative;
@@ -929,7 +937,7 @@ const panelVarsLabels = {
 		font-size: 13px;
 		padding: 20px;
 		width: 300px;
-		background: var(--panel-bg);
+		background: var(--panel-bg) !important;
 		color: var(--panel-text-color);
 		transition: all 200ms cubic-bezier(0.250, 0.100, 0.250, 1.000);
 		transition-timing-function: cubic-bezier(0.250, 0.100, 0.250, 1.000);

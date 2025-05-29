@@ -1,7 +1,7 @@
 <script>
 	import { getContext } from "svelte";
 	import HelloStranger from "$components/hellostranger/HelloStranger.svelte";
-	import Draw from "$components/hellostranger/draw.svelte";
+	// import Draw from "$components/hellostranger/draw.svelte";
 	import Footer from "$components/Footer.svelte";
 
 	const copy = getContext("copy");

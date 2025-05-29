@@ -1,6 +1,8 @@
 <script>
 	import { onMount } from 'svelte';
-	let { copy, type, time } = $props();
+	import colors from "$data/colors-legend.json";
+	import panelVarTranslation from "$data/panelVarTranslation-legend.json"
+	let { copy, type, time, legend } = $props();
 
 	function convertToHTML(text) {
 		let finalText = [];
@@ -93,14 +95,52 @@
 	}
 
 
-
 </script>
 
 <div class="textContainer">
 	<!-- <div class="time">{time}</div> -->
 	{@html convertToHTML(copy)}
+
+	{#if legend && colors[legend]}
+	 <div class="legend">
+	  {#if legend in panelVarTranslation}
+	    {#each Object.entries(colors[legend]) as [key, color]}
+	      <div class="legendItem">
+	        <span class="colorBox" style="background-color: {color}"></span>
+	        <span class="labelText">{panelVarTranslation[legend][key] || key}</span>
+	      </div>
+	    {/each}
+	  {:else}
+	    {#each Object.entries(colors[legend]) as [key, color]}
+	      <div class="legendItem">
+	        <span class="colorBox" style="background-color: {color}"></span>
+	        <span class="labelText">{key}</span>
+	      </div>
+	    {/each}
+	  {/if}
+	</div>
+	{/if}
 </div>
 
 <style>
+	.legend {
+		margin: 20px 0;
+	}
+.legendItem {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+  font-family: var(--mono);
+  color: #aaa;
+}
 
+.colorBox {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+}
+
+.labelText {
+  font-size: 14px;
+}
 </style>
