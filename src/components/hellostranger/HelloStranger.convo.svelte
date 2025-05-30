@@ -26,7 +26,8 @@
         sortCategory,
         quotePerson,
         currentTime,
-        nextTime
+        nextTime,
+        var_to_show
     } = $props();
 
 
@@ -81,11 +82,23 @@ const affectDiff = [{
     "end_affect": p2.end_affect - (p2.pre_affect || 0) + startNum
 }];
 
+// const affectDiff = [{
+//     "pre_affect": p1.pre_affect,
+//     "begin_affect": p1.begin_affect,
+//     "middle_affect": p1.middle_affect,
+//     "end_affect": p1.end_affect
+// },{
+//     "pre_affect": p1.pre_affect,
+//     "begin_affect": p2.begin_affect,
+//     "middle_affect": p2.middle_affect,
+//     "end_affect": p2.end_affect
+// }];
+
 // Cache color arrays to avoid recreating them on each render
 const defaultColor = getComputedStyle(document.documentElement).getPropertyValue('--person-default-bg').trim();
 const affectPositiveColors = ["#ede977"];
 const affectNeutralColor = "#706267";
-const affectNegativeColors = ["#845aad"];
+const affectNegativeColors = ["#ff6bab"];
 
 const allColorsPerson = ["#d62d87","#e06cd5", "#e9a5e2", "#b0877b","#d0caa4", "#face48","#fac937"];
 // const allColors = ["#380a32","#5e2956","#b388bd","#b4c97d","#d0fa61"]
@@ -100,7 +113,7 @@ function getAffectColor(val, category) {
     }
 
     if (category == "raw") {
-        const rawColors = ["#845aad","#706267","#706267","#ede977"]
+        const rawColors = ["#f59de2","#f59de2","#706267","#706267","#9bc7d1","#9bc7d1"]
         return rawColors[Math.min(Math.max(0, Math.round(val / 10 * rawColors.length) - 1), rawColors.length - 1)];
     } else {
         const constrainedVal = Math.max(-5, Math.min(5, val));
@@ -186,12 +199,12 @@ $effect(() => {
         const p2Delay = Math.floor(Math.random() * 2000) + 100;
 
         setTimeout(() => {
-            p1BackgroundColor = "#000";
+            p1BackgroundColor = "#100012";
             p1Scale = 100;
         }, p1Delay);
 
         setTimeout(() => {
-            p2BackgroundColor = "#000";
+            p2BackgroundColor = "#100012";
             p2Scale = 100;
         }, p2Delay);
 
@@ -244,6 +257,7 @@ talking={p1talking}
 {value}
 {currentTime}
 {nextTime}
+{var_to_show}
 />
 
 <Person
@@ -272,5 +286,6 @@ talking={p2talking}
 {value}
 {currentTime}
 {nextTime}
+{var_to_show}
 />
 {/if}

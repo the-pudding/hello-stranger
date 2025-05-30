@@ -29,6 +29,7 @@ let personColor = $state(copy.copy[value].personColor);
 let quotePerson = $state(copy.copy[value].quotePerson);
 let currentText = $state(copy.copy[value].text);
 let currentTime = $state(copy.copy[value].time);
+let var_to_show = $state(copy.copy[value].var_to_show);
 let quoteState = $state(null);
 let zoomDisable = $state(copy.copy[value].zoomDisable);
 // Track the selected person ID instead of convo
@@ -202,6 +203,7 @@ function updateCategory() {
   const newCurrentText = latestItem?.text ?? null;
   const newZoomDisable = latestItem?.zoomDisable ?? null;
   const newCurrentTime = Number(latestItem?.time) ?? null;
+  const newvar_to_show = latestItem?.var_to_show ?? null;
   // Only update if values are different
   let needsUpdate = false;
   
@@ -243,6 +245,10 @@ function updateCategory() {
 
   if (newZoomDisable !== zoomDisable) {
     zoomDisable = newZoomDisable;
+  }
+
+  if (newvar_to_show !== var_to_show) {
+    var_to_show = newvar_to_show;
   }
   
   // Return whether the category update requires a layout update
@@ -757,7 +763,7 @@ $effect(() => {
   }
 });
 
-const panelVars = ["age","sex","race","edu","employ","politics","my_agreeable","my_conscientious","my_extraversion","my_loneliness","my_neurotic","my_open","sleep_today","sleep_usual"];
+const panelVars = ["age","sex","race","edu","employ","politics"]; //"my_agreeable","my_conscientious","my_extraversion","my_loneliness","my_neurotic","my_open","sleep_today","sleep_usual"];
 const panelVarsLabels = {
   "sex": "Sex",
   "race": "Race",
@@ -814,6 +820,7 @@ const panelVarsLabels = {
               {quotePerson}
               {currentTime}
               {nextTime}
+              {var_to_show}
 			      />
 			    {/each}
 			  {/if}
@@ -830,7 +837,7 @@ const panelVarsLabels = {
 		<Scrolly increments={1} linePosition={0.9} showLine={false} bind:value>
 			{#each timeRange as time, i}
 			{@const active = value === i}
-			{#if checkCopy(time) == false || checkCopy(time).time==0 || checkCopy(time).time==1800 || checkCopy(time).quotePerson != null}
+			{#if checkCopy(time) == false || checkCopy(time).time==0 || checkCopy(time).time > 1760 || checkCopy(time).quotePerson != null}
 			<div class="step time" class:active>
 				{convertTime(time)}
 			</div>
@@ -931,17 +938,18 @@ const panelVarsLabels = {
 	}
 	.quotePanel {
 		position: fixed;
-		left: -300px;
+		left: -200px;
 		top: 0px;
 		height: 100vh;
 		font-size: 13px;
 		padding: 20px;
-		width: 300px;
+		width: 200px;
 		background: var(--panel-bg) !important;
 		color: var(--panel-text-color);
 		transition: all 200ms cubic-bezier(0.250, 0.100, 0.250, 1.000);
 		transition-timing-function: cubic-bezier(0.250, 0.100, 0.250, 1.000);
-		overflow: scroll;
+		overflow: hidden;
+    scrollbar-color: #000 #000;
 	}
 	.quotePanel.shown {
 		left: 0px;

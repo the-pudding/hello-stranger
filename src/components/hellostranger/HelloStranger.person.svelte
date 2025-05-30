@@ -28,84 +28,110 @@
         talking,
         value,
         currentTime,
-        nextTime
+        nextTime,
+        var_to_show
     } = $props();
 
 
     function darkenColor(hex, factor = 0.3) {
-  // Remove # if present
-      hex = hex.replace('#', '');
+        // Remove # if present
+        hex = hex.replace('#', '');
 
-  // Parse hex to RGB
-      const r = parseInt(hex.substr(0, 2), 16);
-      const g = parseInt(hex.substr(2, 2), 16);
-      const b = parseInt(hex.substr(4, 2), 16);
+        // Parse hex to RGB
+        const r = parseInt(hex.substr(0, 2), 16);
+        const g = parseInt(hex.substr(2, 2), 16);
+        const b = parseInt(hex.substr(4, 2), 16);
 
-  // Find the strongest component
-      const max = Math.max(r, g, b);
-  const boost = 0.2; // How much stronger to keep the dominant color
-  
-  // Darken each component, giving extra strength to the dominant one
-  const darkR = Math.round(r * (factor + (r === max ? boost : 0)));
-  const darkG = Math.round(g * (factor + (g === max ? boost : 0)));
-  const darkB = Math.round(b * (factor + (b === max ? boost : 0)));
-  
-  // Convert back to hex
-  const toHex = (n) => n.toString(16).padStart(2, '0');
-  
-  return `#${toHex(darkR)}${toHex(darkG)}${toHex(darkB)}`;
-}
+        // Find the strongest component
+        const max = Math.max(r, g, b);
+        const boost = 0.2; // How much stronger to keep the dominant color
 
-function lightenColor(hex, factor = 1.3) {
+        // Darken each component, giving extra strength to the dominant one
+        const darkR = Math.round(r * (factor + (r === max ? boost : 0)));
+        const darkG = Math.round(g * (factor + (g === max ? boost : 0)));
+        const darkB = Math.round(b * (factor + (b === max ? boost : 0)));
+
+        // Convert back to hex
+        const toHex = (n) => n.toString(16).padStart(2, '0');
+
+        return `#${toHex(darkR)}${toHex(darkG)}${toHex(darkB)}`;
+    }
+
+    function darkestColor(hex, factor = 0.27) {
+        // Remove # if present
+        hex = hex.replace('#', '');
+
+        // Parse hex to RGB
+        const r = parseInt(hex.substr(0, 2), 16);
+        const g = parseInt(hex.substr(2, 2), 16);
+        const b = parseInt(hex.substr(4, 2), 16);
+
+        // Find the strongest component
+        const max = Math.max(r, g, b);
+        const boost = 0.2; // How much stronger to keep the dominant color
+
+        // Darken each component, giving extra strength to the dominant one
+        const darkR = Math.round(r * (factor + (r === max ? boost : 0)));
+        const darkG = Math.round(g * (factor + (g === max ? boost : 0)));
+        const darkB = Math.round(b * (factor + (b === max ? boost : 0)));
+
+        // Convert back to hex
+        const toHex = (n) => n.toString(16).padStart(2, '0');
+
+        return `#${toHex(darkR)}${toHex(darkG)}${toHex(darkB)}`;
+    }
+
+    function lightenColor(hex, factor = 1.3) {
      // Remove # if present
-   hex = hex.replace('#', '');
+     hex = hex.replace('#', '');
 
      // Parse hex to RGB
-   const r = parseInt(hex.substr(0, 2), 16);
-   const g = parseInt(hex.substr(2, 2), 16);
-   const b = parseInt(hex.substr(4, 2), 16);
+     const r = parseInt(hex.substr(0, 2), 16);
+     const g = parseInt(hex.substr(2, 2), 16);
+     const b = parseInt(hex.substr(4, 2), 16);
 
      // Apply factor equally to all components
-   const lightR = Math.min(255, Math.round(r * factor));
-   const lightG = Math.min(255, Math.round(g * factor));
-   const lightB = Math.min(255, Math.round(b * factor));
+     const lightR = Math.min(255, Math.round(r * factor));
+     const lightG = Math.min(255, Math.round(g * factor));
+     const lightB = Math.min(255, Math.round(b * factor));
 
      // Convert back to hex
-   const toHex = (n) => n.toString(16).padStart(2, '0');
+     const toHex = (n) => n.toString(16).padStart(2, '0');
 
-   return `#${toHex(lightR)}${toHex(lightG)}${toHex(lightB)}`;
-}
+     return `#${toHex(lightR)}${toHex(lightG)}${toHex(lightB)}`;
+ }
 
-let mainColor = $derived(darkenColor(backgroundColor));
-let bgColor = $derived(lightenColor(backgroundColor));
+ let mainColor = $derived(darkenColor(backgroundColor));
+ let bgColor = $derived(lightenColor(backgroundColor));
+ let darkerColor = $derived(darkestColor(backgroundColor));
 
 // Local reactive state using proper Svelte 5 syntax
-let isSelected = $state(selected);
-let isVisible = $state(visible);
-let currentOpacity = $state(opacity);
-let isLoaded = $state(false);
+ let isSelected = $state(selected);
+ let isVisible = $state(visible);
+ let currentOpacity = $state(opacity);
+ let isLoaded = $state(false);
 
-const frameRate = 6; 
+ const frameRate = 6; 
 
 // Effect to update local state when props change
-$effect(() => {
+ $effect(() => {
     isSelected = selected;
     isVisible = visible;
     currentOpacity = opacity;
 });
 
 // Create variable for current sprite frame
-let currentFrame = $state(0);
-let currentAsciiArt = $state('');
+ let currentFrame = $state(0);
+ let currentAsciiArt = $state('');
 
 
 /// SPRITE FORMATTING
 /// [male,female]-[0,1,2,3,4]-[1,2,3]
 // Determine sex with fallback and prevent unnecessary recalculations
-const sex = (data?.sex === 'male' || data?.sex === 'female') 
-? data.sex 
-: Math.random() > 0.5 ? 'male' : 'female';
-const color = personData.race === "white" || personData.race === "asian" ? Math.abs(personKey.split('').reduce((h, c) => h + c.charCodeAt(0), 0) % 2) : personData.race === "black_or_african_american" ? 3 + Math.abs(personKey.split('').reduce((h, c) => h + c.charCodeAt(0), 0) % 2) : personData.race === "hispanic_or_latino" ? 2 + Math.abs(personKey.split('').reduce((h, c) => h + c.charCodeAt(0), 0) % 2) : personData.race === "native_hawaiian_or_pacific_islander" || personData.race === "american_indian_or_alaska_native" ? 2 : Math.abs(personKey.split('').reduce((h, c) => h + c.charCodeAt(0), 0) % 5);
+ const sex = (data?.sex === 'male' || data?.sex === 'female') 
+ ? data.sex 
+ : Math.random() > 0.5 ? 'male' : 'female';
+ const color = personData.race === "white" || personData.race === "asian" ? Math.abs(personKey.split('').reduce((h, c) => h + c.charCodeAt(0), 0) % 2) : personData.race === "black_or_african_american" ? 3 + Math.abs(personKey.split('').reduce((h, c) => h + c.charCodeAt(0), 0) % 2) : personData.race === "hispanic_or_latino" ? 2 + Math.abs(personKey.split('').reduce((h, c) => h + c.charCodeAt(0), 0) % 2) : personData.race === "native_hawaiian_or_pacific_islander" || personData.race === "american_indian_or_alaska_native" ? 2 : Math.abs(personKey.split('').reduce((h, c) => h + c.charCodeAt(0), 0) % 5);
 // const color = 0;
 const numMax = 3; // this means the generator has 1 possible sprite(s) for this sex and color 
 const num = Math.abs(Array.from(personKey || '').reduce((hash, char) => ((hash << 5) - hash) + char.charCodeAt(0), 0) % numMax);
@@ -122,6 +148,7 @@ $effect(() => {
     }
     mainColor = darkenColor(backgroundColor);
     bgColor = lightenColor(backgroundColor);
+    darkerColor = darkestColor(backgroundColor);
     
     // Set initial sprite frame
     currentAsciiArt = sprites[spriteKey][0];
@@ -131,12 +158,12 @@ $effect(() => {
     isLoaded = true;
     
     // Only start animation if talking is true
-    if (!talking && value != 1800 && backgroundColor != "#000") {
+    if (!talking && value != 1800 && instant != "instant") {
         return; // Exit early if not talking
     }
-    if (value == 1800 && backgroundColor == "#000") {
+    if (value == 1800 && instant == "instant") {
         spriteKey = "end";
-        mainColor = "#111";
+        mainColor = "#2e0a33";
     }
     
     // Animation loop variables
@@ -199,6 +226,39 @@ $effect(() => {
         backgroundColor
     };
 });
+
+function formatCatData(value, category) {
+    if (category == "race") {
+        const raceCat = {
+            "white": "White",
+            "mixed": "Mixed",
+            "asian": "Asian",
+            "hispanic_or_latino": "Hisp",
+            "black_or_african_american": "Black",
+            "nan": "--",
+            "native_hawaiian_or_pacific_islander": "Haw/PacIsl",
+            "american_indian_or_alaska_native": "Native",
+            "other": "Other",
+            "prefer_not_to_say": "--"
+        }
+        return raceCat[value];
+    }
+    if (category == "politics") {
+        const polCat = {
+            "1": "Very Con",
+            "2": "Con",
+            "3": "Center",
+            "4": "Lib",
+            "6": "Very lib"
+        }
+        return polCat[value];
+    }
+    if (category == "age") {
+        return "Age: " + value
+    }
+    return value;
+
+}
 </script>
 
 <div
@@ -220,8 +280,7 @@ data-person-key={personKey}
 data-convo-id={convoId}
 >
 <div class="backgroundColor {instant}" 
-style:background={backgroundColor}
-style:transform={scale}
+style="background: {backgroundColor}; transform: {scale}; border-top: 0.5px solid  {darkerColor}"
 ></div>
 
 <div class="asciiContainer"
@@ -236,18 +295,22 @@ style:color={mainColor}
     <div class="progressbar" style="height:{ (value - currentTime) / (nextTime - currentTime - ((nextTime - currentTime)*.2) ) * 100}%;"></div>
 </div>
 {/if}
-<!-- <div class="catData">{personData[personColor]}</div> -->
+{#if var_to_show}
+<div class="catData">{formatCatData(personData[var_to_show], var_to_show)}</div>
+{/if}
 </div>
 
 <style>
 
     .catData {
         position: absolute;
-        right: 0;
+        right: 2px;
         bottom: 0;
-        color: var(--text-color);
-        font-size: 12px;
-        text-shadow: 0 0 3px black;
+        color: #fff;
+        font-size: 11px;
+        text-shadow: 0 0 10px black;
+        font-family: var(--mono);
+        font-weight: bold;
     }
     .asciiContainer {
         font-family: "Lucida Console", Monaco, monospace;
@@ -276,10 +339,10 @@ style:color={mainColor}
         letter-spacing: -0.1em;
     }
     .person2 .asciiContainer pre {
-       transform: scaleX(-1);
-   }
+     transform: scaleX(-1);
+ }
 
-.person {
+ .person {
     background: var(--person-default-bg);
     display: block;
     position: absolute;
@@ -298,7 +361,10 @@ style:color={mainColor}
 
 .person.selected, .person.quoteText  {
     z-index: 10;
+    box-sizing: content-box;
     border: 3px solid var(--person-hl-color);
+    margin-left: -3px;
+    margin-top: -3px;
 }
 .backgroundColor {
     position: absolute;

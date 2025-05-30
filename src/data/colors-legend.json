@@ -8,7 +8,7 @@
 	},
 	"race": {"other_mixed":"#ff997a","aapi":"#d173bb","black_or_african_american": "#95c6ed","hispanic_or_latino": "#9fe0cf","white": "#c9c1af"},
 	"edu": {"hs_or_less":"#bf93cf","some_college":"#e35db2","associate_degree":"#d1882e","bachelors_degree":"#e8d26f","advanced_degree":"#6883a3"},
-	"raw": {"Negative": "#845aad", "Lukewarm": "#706267", "Positive": "#ede977"},
+	"raw": {"Negative": "#f59de2", "Lukewarm": "#706267", "Positive": "#9bc7d1"},
 	"age": {"0-19": "#d62d87", "20-29": "#e06cd5", "30-39": "#e9a5e2", "40-49": "#b0877b", "50-59": "#d0caa4", "60+": "#d6be76"},
-	"affect": {"Worse": "#845aad","Same": "#706267", "Better": "#ede977"}
+	"affect": {"Worse": "#ff6bab","Same": "#706267", "Better": "#ede977"}
 }
