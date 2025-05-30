@@ -162,6 +162,8 @@ let p2Scale = $derived(affectColumns.includes(personColor) && value != 1800 ?
 
 // Precompute background colors
 let p1BackgroundColor = $derived(
+    personColor === "end" ?
+    "#331c3d" :
     personColor === "age" ? 
     allColorsPerson[Math.floor( (p1[personColor]-10) / (70-10) * (allColorsPerson.length-1) )] || defaultColor :
     sortCategory === "raw" ? 
@@ -172,6 +174,8 @@ let p1BackgroundColor = $derived(
     );
 
 let p2BackgroundColor = $derived(
+    personColor === "end" ?
+    "#331c3d" :
     personColor === "age" ? 
     allColorsPerson[Math.floor((p2[personColor]-10) / (70-10) * (allColorsPerson.length-1) )] || defaultColor :
     sortCategory === "raw" ? 
@@ -190,28 +194,28 @@ $effect(() => {
     }
 });
 
-let instant = $state("");
-$effect(() => {
-    if (value === 1800) {
-        instant = "instant"
-        // Generate random delays between 100ms and 1500ms
-        const p1Delay = Math.floor(Math.random() * 2000) + 100;
-        const p2Delay = Math.floor(Math.random() * 2000) + 100;
+// let instant = $state("");
+// $effect(() => {
+//     if (value === 1800) {
+//         instant = "instant"
+//         // Generate random delays between 100ms and 1500ms
+//         // const p1Delay = Math.floor(Math.random() * 2000) + 100;
+//         // const p2Delay = Math.floor(Math.random() * 2000) + 100;
 
-        setTimeout(() => {
-            p1BackgroundColor = "#100012";
-            p1Scale = 100;
-        }, p1Delay);
+//         // setTimeout(() => {
+//         //     p1BackgroundColor = "#100012";
+//         //     p1Scale = 100;
+//         // }, p1Delay);
 
-        setTimeout(() => {
-            p2BackgroundColor = "#100012";
-            p2Scale = 100;
-        }, p2Delay);
+//         // setTimeout(() => {
+//         //     p2BackgroundColor = "#100012";
+//         //     p2Scale = 100;
+//         // }, p2Delay);
 
-    } else {
-        instant = ""
-    }
-});
+//     } else {
+//         instant = ""
+//     }
+// });
 
 // Function to handle person click - now also manages talking state
 function handlePersonClick(id, convoId) {
@@ -252,7 +256,7 @@ onClick={() => handlePersonClick(p1Key, convoId)}
 {zoomPerson}
 opacity={p1Opacity}
 metric={convo[sortCategory]}
-{instant}
+
 talking={p1talking}
 {value}
 {currentTime}
@@ -281,7 +285,7 @@ onClick={() => handlePersonClick(p2Key, convoId)}
 {zoomPerson}
 opacity={p2Opacity}
 metric={convo[sortCategory]}
-{instant}
+
 talking={p2talking}
 {value}
 {currentTime}

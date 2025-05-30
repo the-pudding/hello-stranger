@@ -1,5 +1,5 @@
 <script>
-	import Convo from "$components/hellostranger/HelloStranger.convo.svelte";
+import Convo from "$components/hellostranger/HelloStranger.convo.svelte";
 import Text from "$components/hellostranger/HelloStranger.text.svelte";
 import Panel from "$components/hellostranger/HelloStranger.panel.svelte";
 import Scrolly from "$components/helpers/Scrolly.svelte";
@@ -10,8 +10,9 @@ import panelVarTranslation from "$data/panelVarTranslation.json"
 
 let { convos, people, copy } = $props();
 let filteredConvos = $state({}); // Initialize as an empty object
-let w = $state(60);  // Fixed width
-let h = $state(60);  // Fixed height
+let baseSize = $state(60); // Base size that changes with screen size
+let w = $state(baseSize);
+let h = $state(baseSize);
 let grouped = $state([]);
 let totalConvos = Object.keys(convos).length;
 let chartWidth = $state(0);
@@ -35,6 +36,7 @@ let zoomDisable = $state(copy.copy[value].zoomDisable);
 // Track the selected person ID instead of convo
 let selectedPersonId = $state(null);
 let selectedConvoId = $state(null);
+let isMobileDevice = false;
 const zoomSpeed = 2;
 
 // Add scroll position tracking
@@ -42,11 +44,14 @@ let scrollY = $state(0);
 let isAtTop = $state(true);
 let nextTime = $state(0);
 
-// Function to update scroll position
+let lastWidth = $state(0);
+let isResizing = $state(false);
+
+// Simple scroll position update
 function updateScrollPosition() {
   if (typeof window !== 'undefined') {
     scrollY = window.scrollY;
-    isAtTop = scrollY < 50; // Consider "top" to be first 50px for better UX
+    isAtTop = scrollY < 50;
   }
 }
 
@@ -65,7 +70,7 @@ for (let i = 0; i <= 30 * tickNums; i++) {
 // ======== LAYOUT CALCULATION =========
 // Pure function to calculate layout parameters
 function calculateLayoutParams() {
-  const fixedHeight = 60;
+  const fixedHeight = baseSize; // Use baseSize instead of hardcoded 60
   const fixedWidth = fixedHeight * 2;
   const outerPadding = { top: 5, right: 50, bottom: 5, left: 5 };
   const availableWidth = chartWidth - outerPadding.left - outerPadding.right;
@@ -99,29 +104,23 @@ function filterConvos() {
     "22083989-6244-440b-af5b-93a3a10f6e04"
   ];
 
-  // Set fixed dimensions
-  w = 60;
-  h = 60;
+  // Set dimensions based on current baseSize
+  w = baseSize;
+  h = baseSize;
   
-  // Get layout parameters
+  // Rest of the function remains the same...
   const layoutParams = calculateLayoutParams();
   const { maxCells } = layoutParams;
   
-  // CRITICAL: Always start with original data
   const convoEntries = Object.entries(convos);
-  
-  // Separate priority conversations
   const prioritizedConvos = convoEntries.filter(([id]) => zoomConvos.includes(id));
   const regularConvos = convoEntries.filter(([id]) => !zoomConvos.includes(id));
   
-  // Calculate how many regular conversations we can include
   const availableForRegular = Math.max(0, maxCells - prioritizedConvos.length);
   const selectedRegularConvos = regularConvos.slice(0, availableForRegular);
   
-  // Combine priority and regular conversations
   const selectedConvos = [...prioritizedConvos, ...selectedRegularConvos];
   
-  // Create filtered convos object
   filteredConvos = Object.fromEntries(selectedConvos);
   totalConvos = selectedConvos.length;
   
@@ -257,11 +256,11 @@ function updateCategory() {
 
 // Fixed updatePeople function to properly respect sortMode and sortCategory
 function updatePeople() {
-  // Fixed size for each person cell
-  const fixedWidth = 60;  // Fixed width
-  const fixedHeight = 60; // Fixed height
+  // Use baseSize instead of hardcoded values
+  const fixedWidth = baseSize;
+  const fixedHeight = baseSize;
   
-  // Define outer padding structure like in updateConvos
+  // Rest of the function remains mostly the same...
   const outerPadding = {
     top: 5,
     right: 50,
@@ -496,7 +495,7 @@ function updateZoom() {
 
   // Only apply zoom if we have valid zoom data and container
   if (zoomData != null && peopleContainer) {
-    const scale = 1.5;
+    const scale = 1.5 + (60 - baseSize) / 100;
 
     const targetCenterX = zoomData.x + zoomData.w / 2;
     const targetCenterY = zoomData.y + zoomData.h / 2;
@@ -516,39 +515,76 @@ function updateZoom() {
   }
 }
 
-// Improve resize handling
 function updateSize() {
   if (!peopleContainer) return;
   
   const newWidth = peopleContainer.clientWidth;
   const newHeight = peopleContainer.clientHeight;
-
-  // Only update if dimensions have actually changed
-  if (newWidth === chartWidth && newHeight === chartHeight) {
+  
+  // Check if this is an initial load or a real width change
+  const isInitialLoad = lastWidth === 0;
+  const widthChanged = Math.abs(newWidth - lastWidth) > 10; // 10px threshold
+  
+  // Skip if:
+  // 1. Not initial load AND
+  // 2. Width hasn't changed (likely just address bar show/hide)
+  if (!isInitialLoad && !widthChanged) {
     return;
   }
-
+  
+  // Store the last width for comparison
+  lastWidth = newWidth;
+  
+  // Calculate target base size based on screen width
+  let targetBaseSize;
+  if (newWidth < 480) {
+    targetBaseSize = 30; // Very small screens
+  } else if (newWidth < 768) {
+    targetBaseSize = 40; // Mobile screens
+  } else if (newWidth < 1024) {
+    targetBaseSize = 50; // Tablets
+  } else {
+    targetBaseSize = 60; // Desktop and larger
+  }
+  
+  // Check if we need to update
+  const needsUpdate = (newWidth !== chartWidth) || 
+                     (newHeight !== chartHeight) || 
+                     (targetBaseSize !== baseSize);
+  
+  if (!needsUpdate) {
+    return;
+  }
+  
+  // Set resizing flag to prevent animations during resize
+  isResizing = true;
+  
   // Update dimensions
   chartWidth = newWidth;
   chartHeight = newHeight;
-
+  baseSize = targetBaseSize;
+  w = targetBaseSize;
+  h = targetBaseSize;
+  
   // Only proceed if we have valid dimensions and component is loaded
   if (chartWidth <= 0 || chartHeight <= 0 || !hasLoaded) {
+    // Clear resizing flag even if we exit early
+    if (hasLoaded) {
+      setTimeout(() => { isResizing = false; }, 300);
+    }
     return;
   }
-
-  // IMPORTANT: Force a complete refresh cycle
   
-  // 1. Temporarily reset state to trigger full redraw
+  // Force a complete refresh cycle
   const oldFilteredConvos = {...filteredConvos};
   filteredConvos = {};
   
-  // 2. Force a DOM update cycle
+  // Force a DOM update cycle
   setTimeout(() => {
-    // 3. Refilter with the original data and reset all layout
+    // Refilter with the original data and reset all layout
     filterConvos();
     
-    // 4. Update all layouts in the correct order
+    // Update all layouts in the correct order
     if (sortMode === "person") {
       updatePeople();
       updateConvos();
@@ -561,11 +597,20 @@ function updateSize() {
       updateZoom();
     }
     
-    // 5. Force a redraw by triggering a small change
-    // This helps Svelte recognize that components need to be re-rendered
-    w = w + 0.001;
-    setTimeout(() => w = 60, 10);
+    // Clear resizing flag after a delay
+    setTimeout(() => {
+      isResizing = false;
+    }, 300);
   }, 50);
+}
+
+function handleOrientationChange() {
+  // Force lastWidth to reset so updateSize will run
+  lastWidth = 0;
+  // Call updateSize after a delay to let the browser settle
+  setTimeout(() => {
+    updateSize();
+  }, 300);
 }
 
 // Better debounced resize handler
@@ -578,18 +623,35 @@ function debouncedResize() {
   resizeTimeout = setTimeout(() => {
     updateSize();
     
-    // Double-check after a delay to ensure proper rendering
     setTimeout(() => {
       const layoutParams = calculateLayoutParams();
       const { maxCells } = layoutParams;
       const currentDisplayed = Object.keys(filteredConvos).length;
       
-      // If we could display more than we are, force another update
       if (currentDisplayed < maxCells && currentDisplayed < Object.keys(convos).length) {
         updateSize();
       }
     }, 300);
   }, 150);
+}
+
+// Simplified viewport handling
+function setupMobileViewport() {
+  if (typeof window === 'undefined') return;
+  
+  const setViewportHeight = () => {
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+  };
+  
+  // Set on load
+  setViewportHeight();
+  
+  // Update only on orientation change (not on every resize)
+  window.addEventListener('orientationchange', () => {
+    setTimeout(setViewportHeight, 300);
+    handleOrientationChange();
+  });
 }
 
 function handleQuoteSelection(personId, convoId) {
@@ -619,45 +681,15 @@ function convertTime(time) {
   // Calculate minutes and seconds
   const minutes = Math.floor(time / 60);
   const seconds = Math.floor(time % 60);
-
-  // Format minutes and seconds without padStart
-  // const formattedMinutes = minutes < 10 ? "0" + minutes : minutes;
-  // const formattedSeconds = seconds < 10 ? "0" + seconds : seconds;
-
-  // Return in MM:SS format
   return minutes + "m " + seconds +"s";
 }
 
-// Setup handlers in onMount
 function setupResizeHandlers() {
-  // Remove any existing handlers first to prevent duplicates
+  isMobileDevice = window.innerWidth < 768;
   window.removeEventListener('resize', debouncedResize);
-  
-  // Add the debounced resize handler
-  window.addEventListener('resize', debouncedResize);
-  
-  // Force an initial size check
-  setTimeout(() => {
-    if (peopleContainer) {
-      chartWidth = peopleContainer.clientWidth;
-      chartHeight = peopleContainer.clientHeight;
-      
-      // Initialize with the full dataset
-      filterConvos();
-      updateConvos();
-      updatePeople();
-      
-      if (zoomPerson) {
-        updateZoom();
-      }
-      
-      // Set loaded flag after initial setup
-      requestAnimationFrame(() => {
-        hasLoaded = true;
-        sceneSpeed = zoomSpeed;
-      });
-    }
-  }, 100);
+  if (!isMobileDevice) {
+    window.addEventListener('resize', debouncedResize);
+  }
 }
 
 let hasLoaded = $state(false);
@@ -668,15 +700,35 @@ onMount(() => {
   if (!initialized) {
     initialized = true;
 
+    // Set up mobile viewport handling
+    setupMobileViewport();
+
     // Initial setup
     if (peopleContainer) {
       chartWidth = peopleContainer.clientWidth;
       chartHeight = peopleContainer.clientHeight;
+      
+      // IMPORTANT: Set initial baseSize based on screen width BEFORE filtering
+      if (chartWidth < 480) {
+        baseSize = 30;
+      } else if (chartWidth < 768) {
+        baseSize = 40;
+      } else if (chartWidth < 1024) {
+        baseSize = 50;
+      } else {
+        baseSize = 60;
+      }
+      
+      // Set w and h to match baseSize
+      w = baseSize;
+      h = baseSize;
+      
+      lastWidth = chartWidth; // Initialize lastWidth
 
       // First update category
       updateCategory();
 
-      // Then filter and update layouts
+      // Then filter and update layouts WITH CORRECT baseSize
       filterConvos();
       updateConvos();
       updatePeople();
@@ -699,15 +751,19 @@ onMount(() => {
       // Add scroll listener
       window.addEventListener('scroll', updateScrollPosition);
       updateScrollPosition();
-      
-      // Force an initial size update to ensure everything is laid out correctly
-      updateSize();
     }, 100);
   }
   
   return () => {
-    window.removeEventListener('resize', debouncedResize);
+    // Only remove if it was added
+    if (!isMobileDevice) {
+      window.removeEventListener('resize', debouncedResize);
+    }
     window.removeEventListener('scroll', updateScrollPosition);
+    window.removeEventListener('orientationchange', () => {
+      setTimeout(setViewportHeight, 300);
+      handleOrientationChange();
+    });
   };
 });
 
@@ -746,23 +802,6 @@ $effect(() => {
   }
 });
 
-// Separate effect for handling window resize
-$effect(() => {
-  // Track window size changes for responsive updates
-  const checkSize = () => {
-    updateSize();
-  };
-
-  if (typeof window !== 'undefined') {
-    window.addEventListener('resize', checkSize);
-
-    // Ensure initial size is set
-    setTimeout(checkSize, 100);
-
-    return () => window.removeEventListener('resize', checkSize);
-  }
-});
-
 const panelVars = ["age","sex","race","edu","employ","politics"]; //"my_agreeable","my_conscientious","my_extraversion","my_loneliness","my_neurotic","my_open","sleep_today","sleep_usual"];
 const panelVarsLabels = {
   "sex": "Sex",
@@ -782,15 +821,16 @@ const panelVarsLabels = {
 };
 
 </script>
+
 <!-- <div class="debug">{sortCategory} // {personColor} // {value}</div> -->
 <div id="content">
 	<section id="scrolly">
 		<div class="visualContainer" bind:this={peopleContainer} class:zoomed={zoomPerson && zoomDisable == null}>
 			<div 
-			  class="zoomContainer {hasLoaded ? 'loaded' : ''}"
-			  style="transform: translate3d({zoomContainerData.x}px, {zoomContainerData.y}px, 0) scale3d({zoomContainerData.scale}, {zoomContainerData.scale}, 1);
-			  {hasLoaded ? `transition: transform ${sceneSpeed}s ease-in-out;` : ''}"
-			>
+        class="zoomContainer {hasLoaded && !isResizing ? 'loaded' : ''}"
+        style="transform: translate3d({zoomContainerData.x}px, {zoomContainerData.y}px, 0) scale3d({zoomContainerData.scale}, {zoomContainerData.scale}, 1);
+        {hasLoaded && !isResizing ? `transition: transform ${sceneSpeed}s ease-in-out;` : ''}"
+      >
 			  {#if Object.keys(convoState).length}
 			    {#each Object.entries(filteredConvos) as [key, convo] (key)} <!-- Add keyed iteration -->
 			      {@const ids = convoState[key]?.ids || []}
@@ -920,10 +960,13 @@ const panelVarsLabels = {
     /* font-weight: bold; */
 	}
 	.timeline {
-		position: relative;
-		z-index: 100;
-		pointer-events: none;
-		padding-bottom: 1000px;
+  position: relative;
+  z-index: 100;
+  pointer-events: none;
+  padding-bottom: 500px;
+  transform: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 	}
 	
 	.zoomContainer {
@@ -933,7 +976,11 @@ const panelVarsLabels = {
 		backface-visibility: hidden;
 		perspective: 1000px;
 	}
+  .zoomContainer:not(.loaded) {
+    transition: none !important;
+  }
 	.zoomContainer.loaded {
+    will-change: transform;
 		transition: transform var(--speed, 1s) ease-in-out;
 	}
 	.quotePanel {

@@ -142,5 +142,6 @@
 
 .labelText {
   font-size: 14px;
+  line-height: 16px;
 }
 </style>

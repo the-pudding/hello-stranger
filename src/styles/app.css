@@ -114,9 +114,10 @@ h5 {
 h6 {
 	font-size: var(--20px, 20px);
 }
+html,
 body {
-	font-family: var(--sans) !important;
-	overflow-x: clip;
+	font-family: var(--sans);
+	background: var(--bgcolor);
 }
 svg {
 	display: block;
@@ -124,26 +125,36 @@ svg {
 	height: auto;
 }
 
-#content {
-	font-family: var(--serif) !important;
+div#content {
+	font-family: var(--serif);
 	/* font-family:  var(--mono); */
-background: var(--bgcolor);
+	
 /* 	color: var(--color-light); */
 color: var(--text-color);
+/* overflow-x: hidden; */
+padding-bottom: 200px;
+-webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
+#scrolly {
+  -webkit-overflow-scrolling: touch;
+  overflow-scrolling: touch;
+}
+
 .visualContainer {
-	position: sticky;
-	top: 0px;
-	left: 0px;
-	width: 100%;
-	height: 100vh;
-	overflow: hidden;
-	margin: 0 auto;
-/* 	max-width: 1400px; */
-/* 	background-image:  url('assets/app/grain.png'); */
+  position: sticky;
+  top: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  margin: 0 auto;
+  height: 100vh;
+  height: calc(var(--vh, 1vh) * 100);
+  contain: layout style paint;
 }
 .textContainer {
 	width: 400px;
+	max-width: 95%;
 	background: var(--text-bg);
 	border: 1px solid #000;
 	color: var(--text-color);
@@ -151,6 +162,10 @@ color: var(--text-color);
 	padding: 5px 20px;
 	text-align: left;
 	pointer-events: auto;
+	 position: relative;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .step.time {
@@ -167,20 +182,31 @@ color: var(--text-color);
 }
 
 .step {
-	height: auto;
-	min-height: 30px;
-	padding: 0px 0;
-	margin: 0vh auto;
-	text-align: center;
-	font-size: 17px;
-	line-height: 25px;
-	pointer-events: none;
+	 position: relative;
+  contain: layout style;
+  /* Remove transform to prevent reflow */
+  transform: none;
+  height: auto;
+  min-height: 30px;
+  padding: 0px 0;
+  margin: 0vh auto;
+  text-align: center;
+  font-size: 17px;
+  line-height: 25px;
+  pointer-events: none;
+  /* Prevent text selection which can cause jumps */
+  -webkit-user-select: none;
+  user-select: none;
+}
+.step.smallText .textContainer {
+	margin: 20px auto;
 }
 .step.bigText {
-  background: var(--bigtext-bg);
-  padding: 20vh 0;
-  min-height: 100vh;
-  position: relative;
+	background: var(--bigtext-bg);
+	padding: 20vh 0;
+	min-height: 100vh;
+	position: relative;
+	margin: 20px 0;
 }
 .step a {
 	color: var(--text-link-color);
@@ -196,26 +222,26 @@ color: var(--text-color);
 
 /* Top gradient - transparent to white */
 .step.bigText::before {
-  content: "";
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  width: 100%;
-  height: 50vh;
-  z-index: -1;
-  background: linear-gradient(to bottom, transparent 0%, var(--bigtext-bg) 100%);
+	content: "";
+	position: absolute;
+	bottom: 100%;
+	left: 0;
+	width: 100%;
+	height: 50vh;
+	z-index: -1;
+	background: linear-gradient(to bottom, transparent 0%, var(--bigtext-bg) 100%);
 }
 
 /* Bottom gradient - white to transparent */
 .step.bigText::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: 100%;
-  height: 50vh;
-  z-index: -1;
-  background: linear-gradient(to top, transparent 0%, var(--bigtext-bg) 100%);
+	content: "";
+	position: absolute;
+	top: 100%;
+	left: 0;
+	width: 100%;
+	height: 50vh;
+	z-index: -1;
+	background: linear-gradient(to top, transparent 0%, var(--bigtext-bg) 100%);
 }
 .step.bigText .textContainer {
 	background: var(--bigtext-bg);
@@ -287,7 +313,7 @@ color: var(--text-color);
 	transform: translateX(-50%);
 	background: var(--quote-bg);
 	color: var(--quote-text-color);
-	max-width: 200px;
+	max-width: 180px;
 	min-width: 100px;
 	min-height:  50px;
 	padding: 5px 10px 5px 5px;
@@ -313,4 +339,40 @@ color: var(--text-color);
 
 .zoomed .quote {
 	font-size: 9px;
+}
+
+@media (max-width: 500px) {
+	.quote {
+		font-size: 11px;
+		max-width: 140px;
+		min-width: 80px;
+	}	
+	.person2 .quote {
+		left: 0%;
+	}
+	.person2 .quote:after {
+		content: "";
+		width: 0; 
+		height: 0; 
+		border-left: 6px solid transparent;
+		border-right: 6px solid transparent;
+		border-bottom: 6px solid var(--quote-bg);
+		position: absolute;
+		bottom: calc(100% - 2px);
+		left: calc(60% - 3px);
+	}
+
+	.zoomed .quote {
+		font-size: 7px;
+	}
+}
+
+@media (max-width: 768px) {
+  .visualContainer {
+    /* Keep it simple - reduce height to avoid the mobile browser UI area */
+    height: calc(100vh - 80px);
+    height: calc(var(--vh, 1vh) * 100 - 80px);
+    /* Add some top margin to center it better */
+    margin-top: 40px;
+  }
 }

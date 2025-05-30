@@ -22,6 +22,6 @@
 <svelte:boundary onerror={(e) => console.error(e)}>
 	<!-- <Draw /> -->
 	<HelloStranger {convos} {people} {copy} />
-	<!-- <Footer recirc={true} /> -->
+	<Footer recirc={true} />
 
 </svelte:boundary>
