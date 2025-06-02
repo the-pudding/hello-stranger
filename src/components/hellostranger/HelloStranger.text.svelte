@@ -49,11 +49,26 @@
 
 				// Process image notation
 				if (line.indexOf("IMAGE|") !== -1) {
-					line = '<div class="imageContainer"><img class="desktopImage" src="assets/app/' +
-					line.replace("IMAGE|", "").replace(/(\r\n|\n|\r)/gm, "") +
-					'.svg"/><img class="mobileImage" src="assets/app/' +
-					line.replace("IMAGE|", "").replace(/(\r\n|\n|\r)/gm, "") +
-					'_mobile.svg"/></div>';
+				    let imageArr = line.replace("IMAGE|", "").replace(/(\r\n|\n|\r)/gm, "").split("|");
+				    const imageObj = {
+				        "url": imageArr[0],
+				        "hed": imageArr[1],
+				        "source": imageArr[2],
+				        "alt": imageArr[3]
+				    }
+				    
+				    let hedHTML = imageObj.hed ? '<h3>' + imageObj.hed + '</h3>' : '';
+				    let sourceHTML = imageObj.source ? '<div class="credits">Source: ' + imageObj.source + '</div>' : '';
+				    
+				    line = '<div class="imageContainer">' + 
+				        hedHTML +
+				        '<img class="desktopImage" alt="' + imageObj.alt + '" src="assets/app/' + 
+				        imageObj.url +
+				        '.svg"/><img class="mobileImage" alt="' + imageObj.alt + '" src="assets/app/' +
+				        imageObj.url +
+				        '_mobile.svg"/>' + 
+				        sourceHTML +
+				        '</div>';
 				}
 
 				// Process chart placeholders
@@ -123,25 +138,6 @@
 </div>
 
 <style>
-	.legend {
-		margin: 20px 0;
-	}
-.legendItem {
-  display: flex;
-  align-items: center;
-  margin-bottom: 4px;
-  font-family: var(--mono);
-  color: #aaa;
-}
 
-.colorBox {
-  width: 16px;
-  height: 16px;
-  margin-right: 8px;
-}
 
-.labelText {
-  font-size: 14px;
-  line-height: 16px;
-}
 </style>

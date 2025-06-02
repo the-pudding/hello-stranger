@@ -483,7 +483,7 @@
   .instructions {
     text-align: center;
     margin-bottom: 10px;
-    color: #666;
+    color: #fff;
     padding: 5px;
     background-color: #f0f0f0;
     border-radius: 4px;
@@ -589,6 +589,7 @@
     display: flex;
     gap: 20px;
     margin-bottom: 20px;
+    color: white;
   }
   
   .editor-wrapper {

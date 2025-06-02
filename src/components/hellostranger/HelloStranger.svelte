@@ -877,7 +877,7 @@ const panelVarsLabels = {
 		<Scrolly increments={1} linePosition={0.9} showLine={false} bind:value>
 			{#each timeRange as time, i}
 			{@const active = value === i}
-			{#if checkCopy(time) == false || checkCopy(time).time==0 || checkCopy(time).time > 1760 || checkCopy(time).quotePerson != null}
+			{#if checkCopy(time) == false || checkCopy(time).time==0 || checkCopy(time).time > 1730 || checkCopy(time).quotePerson != null}
 			<div class="step time" class:active>
 				{convertTime(time)}
 			</div>
@@ -920,8 +920,15 @@ const panelVarsLabels = {
 		{/each}
 	</div>
 </section>
+<div class="bottomWords">
+  Thanks for reading to the end  ◡̈
+</div>
 </div>
 <style>
+  .bottomWords {
+    margin: 100px 0;
+    text-align: center;
+  }
 	.panelVar {
 		display:  block;
 		width: 100%;

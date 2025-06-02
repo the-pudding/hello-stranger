@@ -135,11 +135,19 @@
 // const color = 0;
 const numMax = 3; // this means the generator has 1 possible sprite(s) for this sex and color 
 const num = Math.abs(Array.from(personKey || '').reduce((hash, char) => ((hash << 5) - hash) + char.charCodeAt(0), 0) % numMax);
+let smile = "";
 // Animation for ASCII sprite cycling
 // Animation for ASCII sprite cycling
+let spriteKey = `${sex}_${color}_${num}`;
+const laughTexts = ["Hahahahaha. Hey, it brought you to this place, right?","Hahaha.","Mmmhmm!","I am so delighted that you exist in the world, to do that. Because it's important! This is like critical, critical work that you and I do. And just: Yes! Yes! So you know, you get $15 but a little encouragement for me, too. Keep going!","Yeah, I think I needed that this week.","I’m delighted we got to meet. This was kinda fun. I feel like this is fate somehow.","I feel like I needed this. I feel like you helped me so much.","Good, I love that. That makes me happy. I feel like I’ve accomplished something today.","I wish you were down closer. I’d be like: Hey, let’s grab coffee!"]
 $effect(() => {
     // Get the correct sprite key based on personData
-    let spriteKey = `${sex}_${color}_${num}`;
+    if (personState?.quoteText && zoomPerson == convoId && laughTexts.indexOf(personState.quoteText) != -1) {
+        smile = "smile"
+    } else {
+        smile = "";
+    }
+    spriteKey = `${sex}_${color}_${num}${smile}`;
     
     
     // Skip if sprites or the specific sprite key is not available
@@ -158,9 +166,9 @@ $effect(() => {
     isLoaded = true;
     
     // Only start animation if talking is true
-    // if (!talking && value != 1800 ) {
-    //     return; // Exit early if not talking
-    // }
+    if (!talking && value != 1800 ) {
+        return; // Exit early if not talking
+    }
     // if (value == 1800 && instant == "instant") {
     //     // spriteKey = "end";
     //     mainColor = "#2e0a33";
@@ -295,6 +303,7 @@ style:transform="scale({w/60})"
     <div class="progressbar" style="height:{ (value - currentTime) / (nextTime - currentTime - ((nextTime - currentTime)*.2) ) * 100}%;"></div>
 </div>
 {/if}
+<!-- <div class="catData">{spriteKey}</div> -->
 {#if var_to_show}
 <div class="catData">{formatCatData(personData[var_to_show], var_to_show)}</div>
 {/if}
