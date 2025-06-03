@@ -802,7 +802,7 @@ $effect(() => {
   }
 });
 
-const panelVars = ["age","sex","race","edu","employ","politics"]; //"my_agreeable","my_conscientious","my_extraversion","my_loneliness","my_neurotic","my_open","sleep_today","sleep_usual"];
+const panelVars = ["age","sex","race","edu","employ","politics","pre_affect","begin_affect","middle_affect","end_affect"]; //"my_agreeable","my_conscientious","my_extraversion","my_loneliness","my_neurotic","my_open","sleep_today","sleep_usual"];
 const panelVarsLabels = {
   "sex": "Sex",
   "race": "Race",
@@ -810,6 +810,10 @@ const panelVarsLabels = {
   "edu": "Education",
   "employ": "Employment status",
   "politics": "Political views",
+  "pre_affect": "Affect before convo",
+  "begin_affect": "Affect at beginning",
+  "middle_affect": "Affect in middle",
+  "end_affect": "Affect at end",
   "my_agreeable": "Agreeable (self-assessed)",
   "my_conscientious": "Conscientious (self-assessed)",
   "my_extraversion": "Extraversion (self-assessed)",
@@ -877,7 +881,7 @@ const panelVarsLabels = {
 		<Scrolly increments={1} linePosition={0.9} showLine={false} bind:value>
 			{#each timeRange as time, i}
 			{@const active = value === i}
-			{#if checkCopy(time) == false || checkCopy(time).time==0 || checkCopy(time).time > 1730 || checkCopy(time).quotePerson != null}
+			{#if checkCopy(time) == false || checkCopy(time).time==0 || checkCopy(time).time > 1710 || checkCopy(time).quotePerson != null}
 			<div class="step time" class:active>
 				{convertTime(time)}
 			</div>
@@ -907,6 +911,8 @@ const panelVarsLabels = {
 			  	{panelVarTranslation["likert"][Math.round(quoteState[attribute])]}
 			  {:else if attribute === 'age'}
 			  	{quoteState[attribute].toFixed(0)} years old
+          {:else if attribute.indexOf("affect") != -1}
+          {quoteState[attribute].toFixed(0)} / 10
 			  {:else if typeof quoteState[attribute] === 'number'}
 			    {quoteState[attribute].toFixed(2)}
 			  {:else if typeof quoteState[attribute] === 'string'}
