@@ -137,23 +137,23 @@ color: var(--text-color);
 /* overflow-x: hidden; */
 padding-bottom: 0px;
 -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
+text-size-adjust: 100%;
 }
 #scrolly {
-  -webkit-overflow-scrolling: touch;
-  overflow-scrolling: touch;
+	-webkit-overflow-scrolling: touch;
+	overflow-scrolling: touch;
 }
 
 .visualContainer {
-  position: sticky;
-  top: 0;
-  left: 0;
-  width: 100%;
-  overflow: hidden;
-  margin: 0 auto;
-  height: 100vh;
-  height: calc(var(--vh, 1vh) * 100);
-  contain: layout style paint;
+	position: sticky;
+	top: 0;
+	left: 0;
+	width: 100%;
+	overflow: hidden;
+	margin: 0 auto;
+	height: 100vh;
+	height: calc(var(--vh, 1vh) * 100);
+	contain: layout style paint;
 }
 .textContainer {
 	width: 400px;
@@ -165,10 +165,10 @@ padding-bottom: 0px;
 	padding: 5px 20px;
 	text-align: left;
 	pointer-events: auto;
-	 position: relative;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
+	position: relative;
+	transform: translateZ(0);
+	backface-visibility: hidden;
+	-webkit-backface-visibility: hidden;
 }
 
 .step.time {
@@ -185,21 +185,21 @@ padding-bottom: 0px;
 }
 
 .step {
-	 position: relative;
-  contain: layout style;
-  /* Remove transform to prevent reflow */
-  transform: none;
-  height: auto;
-  min-height: 30px;
-  padding: 0px 0;
-  margin: 0vh auto;
-  text-align: center;
-  font-size: 17px;
-  line-height: 25px;
-  pointer-events: none;
-  /* Prevent text selection which can cause jumps */
-  -webkit-user-select: none;
-  user-select: none;
+	position: relative;
+	contain: layout style;
+	/* Remove transform to prevent reflow */
+	transform: none;
+	height: auto;
+	min-height: 30px;
+	padding: 0px 0;
+	margin: 0vh auto;
+	text-align: center;
+	font-size: 17px;
+	line-height: 25px;
+	pointer-events: none;
+	/* Prevent text selection which can cause jumps */
+	-webkit-user-select: none;
+	user-select: none;
 }
 .step.smallText .textContainer {
 	margin: 20px auto;
@@ -283,7 +283,7 @@ padding-bottom: 0px;
 	padding: 1rem;
 } */
 .step .note {
-	font-size: 12px;
+	font-size: 13px;
 	line-height: 1.3em;
 	color:  var(--text-note-color);
 	margin-top: 5px;
@@ -375,13 +375,13 @@ padding-bottom: 0px;
 }
 
 @media (max-width: 768px) {
-  .visualContainer {
-    /* Keep it simple - reduce height to avoid the mobile browser UI area */
-    height: calc(100vh - 80px);
-    height: calc(var(--vh, 1vh) * 100 - 80px);
-    /* Add some top margin to center it better */
-    margin-top: 40px;
-  }
+	.visualContainer {
+		/* Keep it simple - reduce height to avoid the mobile browser UI area */
+		height: calc(100vh - 80px);
+		height: calc(var(--vh, 1vh) * 100 - 80px);
+		/* Add some top margin to center it better */
+		margin-top: 40px;
+	}
 }
 .imageContainer {
 	margin: 40px 0;
@@ -394,8 +394,8 @@ padding-bottom: 0px;
 	color: white;
 }
 .smallText .imageContainer h3 {
-		font-size: 18px;
-		line-height: 22px;
+	font-size: 18px;
+	line-height: 22px;
 }
 .smallText .imageContainer .mobileImage, .smallText .imageContainer .desktopImage  {
 	margin: 10px 0 20px;
@@ -435,15 +435,15 @@ padding-bottom: 0px;
 }
 
 
-	.legend {
-		margin: 20px 0;
-	}
+.legend {
+	margin: 20px 0;
+}
 .legendItem {
-  display: flex;
-  align-items: center;
-  margin-bottom: 4px;
-  font-family: var(--mono);
-  color: #aaa;
+	display: flex;
+	align-items: center;
+	margin-bottom: 4px;
+	font-family: var(--mono);
+	color: #aaa;
 }
 .legendItem .arrow {
 	color: white;
@@ -455,13 +455,41 @@ padding-bottom: 0px;
 	margin-right: 10px;
 	border-radius: 3px;
 }
+.step .arrow {
+	color: white;
+	font-size: 14px;
+	border: 1px solid var(--text-color);
+	font-weight: bold;
+	text-align: center;
+	padding: 0px 5px 5px;
+	margin-right: 2px;
+	border-radius: 3px;
+}
 .colorBox {
-  width: 16px;
-  height: 16px;
-  margin-right: 8px;
+	width: 16px;
+	height: 16px;
+	margin-right: 8px;
 }
 
 .labelText {
-  font-size: 14px;
-  line-height: 16px;
+	font-size: 14px;
+	line-height: 16px;
+}
+
+.catData {
+	position: absolute;
+	right: 2px;
+	bottom: 0;
+	color: #fff;
+	font-size: 11px;
+	text-shadow: 0 0 10px black;
+	font-family: var(--mono);
+	font-weight: bold;
+	transition: all var(--speed, 1s) ease-in-out;
+}
+.reducedMotiontrue .catData, .reducedMotiontrue .asciiContainer {
+	transition: none;
+}
+.zoomed .catData {
+	font-size: 9px !important;
 }

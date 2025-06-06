@@ -1,14 +1,15 @@
 <script>
-import Convo from "$components/hellostranger/HelloStranger.convo.svelte";
-import Text from "$components/hellostranger/HelloStranger.text.svelte";
-import Panel from "$components/hellostranger/HelloStranger.panel.svelte";
-import Scrolly from "$components/helpers/Scrolly.svelte";
-import { onMount } from "svelte";
-import { fade } from 'svelte/transition';
-import colors from "$data/colors.json";
-import panelVarTranslation from "$data/panelVarTranslation.json"
+  import Convo from "$components/hellostranger/HelloStranger.convo.svelte";
+  import Text from "$components/hellostranger/HelloStranger.text.svelte";
+  import Panel from "$components/hellostranger/HelloStranger.panel.svelte";
+  import Scrolly from "$components/helpers/Scrolly.svelte";
+  import { onMount } from "svelte";
+  import { fade } from 'svelte/transition';
+  import colors from "$data/colors.json";
+  import panelVarTranslation from "$data/panelVarTranslation.json"
 
-let { convos, people, copy } = $props();
+  let prefersReducedMotion = $state(false);
+  let { convos, people, copy } = $props();
 let filteredConvos = $state({}); // Initialize as an empty object
 let baseSize = $state(60); // Base size that changes with screen size
 let w = $state(baseSize);
@@ -130,7 +131,7 @@ function filterConvos() {
 // ======== CONVERSATION LAYOUT =========
 // Position conversations on the grid
 function updateConvos() {
-  
+
   // Get layout parameters without filtering again
   const layoutParams = calculateLayoutParams();
   const { maxCols, innerPadding, outerPadding, fixedWidth, fixedHeight, availableWidth, availableHeight } = layoutParams;
@@ -143,8 +144,8 @@ function updateConvos() {
     const bVal = b[1]?.[sortCategory];
     if (aVal !== undefined && bVal !== undefined) {
       return (typeof aVal === 'string')
-        ? aVal.localeCompare(bVal)
-        : aVal - bVal;
+      ? aVal.localeCompare(bVal)
+      : aVal - bVal;
     }
     return aVal !== undefined ? -1 : bVal !== undefined ? 1 : a[0].localeCompare(b[0]);
   });
@@ -176,16 +177,16 @@ function updateConvos() {
       speed: value === 0 ? [0, 0] : [Math.random() * 2000 + 2000, Math.random() * 2000 + 2000]
     }];
   }));
- 
+
 }
 
 function toTitleCase(str) {
   if (!str) return '';
   return str
-    .toLowerCase()
-    .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+  .toLowerCase()
+  .split('_')
+  .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+  .join(' ');
 }
 
 // Update the category function to ensure sortMode and sortCategory are in sync
@@ -447,7 +448,7 @@ function updatePeople() {
 
   // Set peopleState to the updated layout
   peopleState = updatedPeople;
- 
+
 }
 
 function countUniqueInnerKeys(objectOfObjects) {
@@ -549,8 +550,8 @@ function updateSize() {
   
   // Check if we need to update
   const needsUpdate = (newWidth !== chartWidth) || 
-                     (newHeight !== chartHeight) || 
-                     (targetBaseSize !== baseSize);
+  (newHeight !== chartHeight) || 
+  (targetBaseSize !== baseSize);
   
   if (!needsUpdate) {
     return;
@@ -655,9 +656,13 @@ function setupMobileViewport() {
 }
 
 function handleQuoteSelection(personId, convoId) {
-  selectedPersonId = personId;
-  selectedConvoId = convoId;
-  quoteState = people[personId];
+  if (selectedPersonId == personId) {
+    closeQuotePanel()
+  } else {
+    selectedPersonId = personId;
+    selectedConvoId = convoId;
+    quoteState = people[personId];
+  }
 }
 
 function closeQuotePanel() {
@@ -697,6 +702,7 @@ let initialized = $state(false);
 
 // Modified onMount to use the setup function
 onMount(() => {
+
   if (!initialized) {
     initialized = true;
 
@@ -752,6 +758,26 @@ onMount(() => {
       window.addEventListener('scroll', updateScrollPosition);
       updateScrollPosition();
     }, 100);
+
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    function updatePreference(e) {
+      prefersReducedMotion = e.matches;
+    }
+
+        // Add listener
+    mediaQuery.addListener(updatePreference);
+
+        // Set initial value
+    prefersReducedMotion = mediaQuery.matches;
+    if (prefersReducedMotion) {
+      sceneSpeed = 0;
+    }
+
+        // Cleanup function
+    return () => {
+      mediaQuery.removeListener(updatePreference);
+    };
   }
   
   return () => {
@@ -827,104 +853,105 @@ const panelVarsLabels = {
 </script>
 
 <!-- <div class="debug">{sortCategory} // {personColor} // {value}</div> -->
-<div id="content">
+<div id="content" class="reducedMotion{prefersReducedMotion}">
 	<section id="scrolly">
 		<div class="visualContainer" bind:this={peopleContainer} class:zoomed={zoomPerson && zoomDisable == null}>
 			<div 
-        class="zoomContainer {hasLoaded && !isResizing ? 'loaded' : ''}"
-        style="transform: translate3d({zoomContainerData.x}px, {zoomContainerData.y}px, 0) scale3d({zoomContainerData.scale}, {zoomContainerData.scale}, 1);
-        {hasLoaded && !isResizing ? `transition: transform ${sceneSpeed}s ease-in-out;` : ''}"
+      class="zoomContainer {hasLoaded && !isResizing ? 'loaded' : ''}"
+      style="transform: translate3d({zoomContainerData.x}px, {zoomContainerData.y}px, 0) scale3d({zoomContainerData.scale}, {zoomContainerData.scale}, 1);
+      {hasLoaded && !isResizing ? `transition: transform ${sceneSpeed}s ease-in-out;` : ''}"
       >
-			  {#if Object.keys(convoState).length}
-			    {#each Object.entries(filteredConvos) as [key, convo] (key)} <!-- Add keyed iteration -->
-			      {@const ids = convoState[key]?.ids || []}
-			      {@const visible = (zoomDisable == 1) || (zoomPerson === null) || (sortMode == "person" && ids.includes(zoomPerson)) || (sortMode != "person" && key == zoomPerson)}
-			      <Convo 
-			        convoId={key} 
-			        {sortMode} 
-			        {personColor} 
-			        convo={filteredConvos[key]}
-			        {value} 
-			        quotes={quotes[key]} 
-			        convoState={convoState[key]} 
-			        {zoomPerson} 
-			        {visible} 
-			        p1state={peopleState[ids[0]]} 
-			        p2state={peopleState[ids[1]]} 
-			        p1data={people[ids[0]]} 
-			        p2data={people[ids[1]]} 
-			        onQuoteSelect={handleQuoteSelection}
-			        selectedPersonId={selectedPersonId}
-			        selectedConvoId={selectedConvoId}
-			        {w}
-			        {h}
-			        {chartWidth}
-			        {chartHeight}
-			        {sortCategory}
-              {quotePerson}
-              {currentTime}
-              {nextTime}
-              {var_to_show}
-			      />
-			    {/each}
-			  {/if}
-			</div>
-		{#if isAtTop}
-		<div class="headline" transition:fade>
-			<h1>30 minutes with a stranger</h1>
-			<div class="byline">by <a href="https://pudding.cool/author/alvin-chang/">alvin chang</a></div>
-		</div>
-		{/if}
-	</div>
+      {#if Object.keys(convoState).length}
+      {#each Object.entries(filteredConvos) as [key, convo] (key)} <!-- Add keyed iteration -->
+      {@const ids = convoState[key]?.ids || []}
+      {@const visible = (zoomDisable == 1) || (zoomPerson === null) || (sortMode == "person" && ids.includes(zoomPerson)) || (sortMode != "person" && key == zoomPerson)}
+      <Convo 
+      convoId={key} 
+      {sortMode} 
+      {personColor} 
+      convo={filteredConvos[key]}
+      {value} 
+      quotes={quotes[key]} 
+      convoState={convoState[key]} 
+      {zoomPerson} 
+      {visible} 
+      p1state={peopleState[ids[0]]} 
+      p2state={peopleState[ids[1]]} 
+      p1data={people[ids[0]]} 
+      p2data={people[ids[1]]} 
+      onQuoteSelect={handleQuoteSelection}
+      selectedPersonId={selectedPersonId}
+      selectedConvoId={selectedConvoId}
+      {w}
+      {h}
+      {chartWidth}
+      {chartHeight}
+      {sortCategory}
+      {quotePerson}
+      {currentTime}
+      {nextTime}
+      {var_to_show}
+      {prefersReducedMotion}
+      />
+      {/each}
+      {/if}
+    </div>
+    {#if isAtTop}
+    <div class="headline" transition:fade>
+     <h1>30 minutes with a stranger</h1>
+     <div class="byline">by <a href="https://pudding.cool/author/alvin-chang/">alvin chang</a></div>
+   </div>
+   {/if}
+ </div>
 
-	<div class="timeline">
-		<Scrolly increments={1} linePosition={0.9} showLine={false} bind:value>
-			{#each timeRange as time, i}
-			{@const active = value === i}
-			{#if checkCopy(time) == false || checkCopy(time).time==0 || checkCopy(time).time > 1710 || checkCopy(time).quotePerson != null}
-			<div class="step time" class:active>
-				{convertTime(time)}
-			</div>
-			{:else}
-			<div class="step {checkCopy(time).addclass ? checkCopy(time).addclass : 'smallText'}" class:active>
-				<div class="time">{convertTime(time)}</div>
-				<Text copy={checkCopy(time).text} time={convertTime(time)} legend={checkCopy(time).legend}/>
-			</div>
-			{/if}
-			{/each}
-		</Scrolly>
-	</div>
-	<div class="quotePanel" class:shown={quoteState !== null}>
-		<div class="close" on:click={closeQuotePanel}>
-			Close
-		</div>
-		{#each panelVars as attribute}
-		<div class="panelVar">
-			<div class="panelLabel">{panelVarsLabels[attribute]}</div>
-			{#if quoteState != null}
-			<div class="panelValue">
-			  {#if quoteState[attribute] === null || quoteState[attribute] === undefined}
-			    --
-			  {:else if attribute in panelVarTranslation && quoteState[attribute] in panelVarTranslation[attribute]}
-			    {panelVarTranslation[attribute][quoteState[attribute]]}
-			  {:else if attribute.indexOf("my_") != -1}
-			  	{panelVarTranslation["likert"][Math.round(quoteState[attribute])]}
-			  {:else if attribute === 'age'}
-			  	{quoteState[attribute].toFixed(0)} years old
-          {:else if attribute.indexOf("affect") != -1}
-          {quoteState[attribute].toFixed(0)} / 10
-			  {:else if typeof quoteState[attribute] === 'number'}
-			    {quoteState[attribute].toFixed(2)}
-			  {:else if typeof quoteState[attribute] === 'string'}
-			    {toTitleCase(quoteState[attribute])}
-			  {:else}
-			    {quoteState[attribute]}
-			  {/if}
-			</div>
-			{/if}
-		</div>
-		{/each}
-	</div>
+ <div class="timeline">
+  <Scrolly increments={1} linePosition={0.9} showLine={false} bind:value>
+   {#each timeRange as time, i}
+   {@const active = value === i}
+   {#if checkCopy(time) == false || checkCopy(time).time==0 || checkCopy(time).time > 1800 || checkCopy(time).quotePerson != null}
+   <div class="step time" class:active>
+    {convertTime(time)}
+  </div>
+  {:else}
+  <div class="step {checkCopy(time).addclass ? checkCopy(time).addclass : 'smallText'}" class:active>
+    <div class="time">{convertTime(time)}</div>
+    <Text copy={checkCopy(time).text} time={convertTime(time)} legend={checkCopy(time).legend}/>
+  </div>
+  {/if}
+  {/each}
+</Scrolly>
+</div>
+<div class="quotePanel" class:shown={quoteState !== null}>
+  <div class="close" on:click={closeQuotePanel}>
+   Close
+ </div>
+ {#each panelVars as attribute}
+ <div class="panelVar">
+   <div class="panelLabel">{panelVarsLabels[attribute]}</div>
+   {#if quoteState != null}
+   <div class="panelValue">
+     {#if quoteState[attribute] === null || quoteState[attribute] === undefined}
+     --
+     {:else if attribute in panelVarTranslation && quoteState[attribute] in panelVarTranslation[attribute]}
+     {panelVarTranslation[attribute][quoteState[attribute]]}
+     {:else if attribute.indexOf("my_") != -1}
+     {panelVarTranslation["likert"][Math.round(quoteState[attribute])]}
+     {:else if attribute === 'age'}
+     {quoteState[attribute].toFixed(0)} years old
+     {:else if attribute.indexOf("affect") != -1}
+     {quoteState[attribute].toFixed(0)} / 10
+     {:else if typeof quoteState[attribute] === 'number'}
+     {quoteState[attribute].toFixed(2)}
+     {:else if typeof quoteState[attribute] === 'string'}
+     {toTitleCase(quoteState[attribute])}
+     {:else}
+     {quoteState[attribute]}
+     {/if}
+   </div>
+   {/if}
+ </div>
+ {/each}
+</div>
 </section>
 <div class="bottomWords">
   Thanks for reading to the end  ◡̈
@@ -935,95 +962,98 @@ const panelVarsLabels = {
     margin: 100px 0;
     text-align: center;
   }
-	.panelVar {
-		display:  block;
-		width: 100%;
-		margin: 5px 0 10px;
-	}
-	.panelLabel {
-		font-size: 13px;
-		font-weight: bold;
-		margin-bottom: 2px;
-	}
-	.panelLabel, .panelValue {
-		display: block;
-		width: 100%;
-	}
-	.panelValue {
-		font-size: 13px;
-		opacity: 0.5;
-	}
+  .panelVar {
+    display:  block;
+    width: 100%;
+    margin: 5px 0 10px;
+  }
+  .panelLabel {
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 2px;
+  }
+  .panelLabel, .panelValue {
+    display: block;
+    width: 100%;
+  }
+  .panelValue {
+    font-size: 13px;
+    opacity: 0.5;
+  }
 
-	.debug {
-		position: fixed;
-		left:  0;
-		top: 0;
-	}
-	.headline {
-		color: var(--text-color);
-		position: absolute;
-		bottom: 70%;
-		text-align: center;
-		left: 0%;
-		width: 100%;
-	}
-	.headline h1 {
-		font-size: 18px;
+  .debug {
+    position: fixed;
+    left:  0;
+    top: 0;
+  }
+  .headline {
+    color: var(--text-color);
+    position: absolute;
+    bottom: 70%;
+    text-align: center;
+    left: 0%;
+    width: 100%;
+  }
+  .headline h1 {
+    font-size: 18px;
     color: white;
     /* font-weight: bold; */
-	}
-	.timeline {
-  position: relative;
-  z-index: 100;
-  pointer-events: none;
-  padding-bottom: 500px;
-  transform: none;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-	}
-	
-	.zoomContainer {
-		width: 100%;
-		height: 100vh;
-		transform-origin: top left;
-		backface-visibility: hidden;
-		perspective: 1000px;
-	}
+  }
+  .timeline {
+    position: relative;
+    z-index: 100;
+    pointer-events: none;
+    padding-bottom: 500px;
+    transform: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .zoomContainer {
+    width: 100%;
+    height: 100vh;
+    transform-origin: top left;
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
   .zoomContainer:not(.loaded) {
     transition: none !important;
   }
-	.zoomContainer.loaded {
+  .zoomContainer.loaded {
     will-change: transform;
-		transition: transform var(--speed, 1s) ease-in-out;
-	}
-	.quotePanel {
-		position: fixed;
-		left: -200px;
-		top: 0px;
-		height: 100vh;
-		font-size: 13px;
-		padding: 20px;
-		width: 200px;
-		background: var(--panel-bg) !important;
-		color: var(--panel-text-color);
-		transition: all 200ms cubic-bezier(0.250, 0.100, 0.250, 1.000);
-		transition-timing-function: cubic-bezier(0.250, 0.100, 0.250, 1.000);
-		overflow: hidden;
+    transition: transform var(--speed, 1s) ease-in-out;
+  }
+  .reducedMotiontrue .zoomContainer {
+    transition: none !important;
+  }
+  .quotePanel {
+    position: fixed;
+    left: -200px;
+    top: 0px;
+    height: 100vh;
+    font-size: 13px;
+    padding: 20px;
+    width: 200px;
+    background: var(--panel-bg) !important;
+    color: var(--panel-text-color);
+    transition: all 200ms cubic-bezier(0.250, 0.100, 0.250, 1.000);
+    transition-timing-function: cubic-bezier(0.250, 0.100, 0.250, 1.000);
+    overflow: hidden;
     scrollbar-color: #000 #000;
-	}
-	.quotePanel.shown {
-		left: 0px;
-	}
-	.close {
-		width: 100%;
-		padding: 5px;
-		background: var(--button-bg);
-		color:  var(--button-text-color);
-		font-weight: bold;
-		text-align: center;
-		cursor: pointer;
-		margin-bottom: 20px;
-		position: sticky;
-		top: 10px;
-	}
+  }
+  .quotePanel.shown {
+    left: 0px;
+  }
+  .close {
+    width: 100%;
+    padding: 5px;
+    background: var(--button-bg);
+    color:  var(--button-text-color);
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+    margin-bottom: 20px;
+    position: sticky;
+    top: 10px;
+  }
 </style>

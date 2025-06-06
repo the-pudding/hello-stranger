@@ -24,13 +24,25 @@
         convoId,
         zoomPerson,
         opacity = 1,
-        // instant,
+        instant,
         talking,
         value,
         currentTime,
         nextTime,
-        var_to_show
+        var_to_show,
+        prefersReducedMotion
     } = $props();
+
+    const nameLookup = {
+        "5b0319e68d753d0001cc75c7": "Kate",
+        "5b315e97f23189000161a03d": "Dawn",
+        "5dde8fba82f458000c8c7c75": "Dave",
+        "5d5dc2d37bfc8400013b653c": "Eve",
+        "5f1d266c6f7d7f62a219fade": "Hank",
+        "5ef0d0a8074e4c413a113a68": "Faith",
+        "59ad6f1e09709e00013c2ba5": "Paige",
+        "5d37d2861566530016a061de": "Raúl"
+    }
 
 
     function darkenColor(hex, factor = 0.3) {
@@ -132,15 +144,15 @@
    ? data.sex 
    : Math.random() > 0.5 ? 'male' : 'female';
    const color = personData.race === "white" || personData.race === "asian" ? Math.abs(personKey.split('').reduce((h, c) => h + c.charCodeAt(0), 0) % 2) : personData.race === "black_or_african_american" ? 3 + Math.abs(personKey.split('').reduce((h, c) => h + c.charCodeAt(0), 0) % 2) : personData.race === "hispanic_or_latino" ? 2 + Math.abs(personKey.split('').reduce((h, c) => h + c.charCodeAt(0), 0) % 2) : personData.race === "native_hawaiian_or_pacific_islander" || personData.race === "american_indian_or_alaska_native" ? 2 : Math.abs(personKey.split('').reduce((h, c) => h + c.charCodeAt(0), 0) % 5);
-// const color = 0;
-const numMax = 3; // this means the generator has 1 possible sprite(s) for this sex and color 
-const num = Math.abs(Array.from(personKey || '').reduce((hash, char) => ((hash << 5) - hash) + char.charCodeAt(0), 0) % numMax);
-let smile = "";
-// Animation for ASCII sprite cycling
-// Animation for ASCII sprite cycling
-let spriteKey = `${sex}_${color}_${num}`;
-const laughTexts = ["Hahahahaha. Hey, it brought you to this place, right?","Hahaha.","Mmmhmm!","I am so delighted that you exist in the world, to do that. Because it's important! This is like critical, critical work that you and I do. And just: Yes! Yes! So you know, you get $15 but a little encouragement for me, too. Keep going!","Yeah, I think I needed that this week.","I’m delighted we got to meet. This was kinda fun. I feel like this is fate somehow.","I feel like I needed this. I feel like you helped me so much.","Good, I love that. That makes me happy. I feel like I’ve accomplished something today.","I wish you were down closer. I’d be like: Hey, let’s grab coffee!"]
-$effect(() => {
+    // const color = 0;
+    const numMax = 3; // this means the generator has 1 possible sprite(s) for this sex and color 
+    const num = Math.abs(Array.from(personKey || '').reduce((hash, char) => ((hash << 5) - hash) + char.charCodeAt(0), 0) % numMax);
+    let smile = "";
+    // Animation for ASCII sprite cycling
+    // Animation for ASCII sprite cycling
+    let spriteKey = `${sex}_${color}_${num}`;
+    const laughTexts = ["I could eat soup anytime. I love soup at any time.","Oh yeah. Oh my God. It's not soup weather right now. It's the end of August!","Hahahahaha. Hey, it brought you to this place, right?","Hahaha.","Mmmhmm!","I am so delighted that you exist in the world, to do that. Because it's important! This is like critical, critical work that you and I do. And just: Yes! Yes! So you know, you get $15 but a little encouragement for me, too. Keep going!","Yeah, I think I needed that this week.","I’m delighted we got to meet. This was kinda fun. I feel like this is fate somehow.","I feel like I needed this. I feel like you helped me so much.","Good, I love that. That makes me happy. I feel like I’ve accomplished something today.","I wish you were down closer. I’d be like: Hey, let’s grab coffee!"]
+    $effect(() => {
     // Get the correct sprite key based on personData
     if (personState?.quoteText && zoomPerson == convoId && laughTexts.indexOf(personState.quoteText) != -1) {
         smile = "smile"
@@ -164,15 +176,17 @@ $effect(() => {
     
     // Mark as loaded
     isLoaded = true;
-    
+    if (prefersReducedMotion) {
+        return
+    }
     // Only start animation if talking is true
-    if (!talking && value != 1800 ) {
+    if (!talking && value > 1800) {
         return; // Exit early if not talking
     }
-    // if (value == 1800 && instant == "instant") {
-    //     // spriteKey = "end";
-    //     mainColor = "#2e0a33";
-    // }
+    if (value == 1800 && instant == "instant") {
+        spriteKey = "end" + number;
+        mainColor = "#2e0a33";
+    }
     
     // Animation loop variables
     let frameCount = 0;
@@ -270,7 +284,7 @@ function formatCatData(value, category) {
 </script>
 
 <div
-class="person person{number}"
+class="person person{number} nomotion{prefersReducedMotion} {instant}"
 class:fadeOut={!isVisible}
 class:selected={isSelected}
 class:quoteText={personState?.quoteText}
@@ -307,20 +321,14 @@ style:transform="scale({w/60})"
 {#if var_to_show}
 <div class="catData">{formatCatData(personData[var_to_show], var_to_show)}</div>
 {/if}
+{#if !var_to_show && zoomPerson == convoId && value != 0}
+<div class="catData">{nameLookup[personKey]}</div>
+{/if}
 </div>
 
 <style>
 
-    .catData {
-        position: absolute;
-        right: 2px;
-        bottom: 0;
-        color: #fff;
-        font-size: 11px;
-        text-shadow: 0 0 10px black;
-        font-family: var(--mono);
-        font-weight: bold;
-    }
+
     .asciiContainer {
         font-family: "Lucida Console", Monaco, monospace;
         position: absolute;
@@ -337,6 +345,7 @@ style:transform="scale({w/60})"
         align-items: center;
         justify-content: center;
         transition: color 2s ease-in-out;
+        user-select: none;
     }
     
     .asciiContainer pre {
@@ -367,13 +376,25 @@ style:transform="scale({w/60})"
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
 }
-
-.person.selected, .person.quoteText  {
+.instant.person {
+    pointer-events: none;
+}
+.person.nomotiontrue {
+    transition: none !important;
+}
+.person.selected  {
     z-index: 10;
     box-sizing: content-box;
     border: 3px solid var(--person-hl-color);
     margin-left: -3px;
     margin-top: -3px;
+}
+.person.quoteText {
+    z-index: 10;
+    box-sizing: content-box;
+    margin-left: -3px;
+    margin-top: -3px;
+    border: 3px solid var(--quote-hl-color);
 }
 .backgroundColor {
     position: absolute;
@@ -384,6 +405,9 @@ style:transform="scale({w/60})"
     transform-origin: bottom;
     transition: transform 2s ease-in-out, background 2s ease-in-out;
     will-change: transform, background;
+}
+.nomotiontrue .backgroundColor {
+    transition: none !important;
 }
 .instant .backgroundColor {
     color: #222 !important;

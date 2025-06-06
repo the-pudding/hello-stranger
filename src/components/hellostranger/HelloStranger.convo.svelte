@@ -27,7 +27,8 @@
         quotePerson,
         currentTime,
         nextTime,
-        var_to_show
+        var_to_show,
+        prefersReducedMotion
     } = $props();
 
 
@@ -194,28 +195,28 @@ $effect(() => {
     }
 });
 
-// let instant = $state("");
-// $effect(() => {
-//     if (value === 1800) {
-//         instant = "instant"
-//         // Generate random delays between 100ms and 1500ms
-//         // const p1Delay = Math.floor(Math.random() * 2000) + 100;
-//         // const p2Delay = Math.floor(Math.random() * 2000) + 100;
+let instant = $state("");
+$effect(() => {
+    if (value === 1800) {
+        instant = "instant"
+        // Generate random delays between 100ms and 1500ms
+        // const p1Delay = Math.floor(Math.random() * 2000) + 100;
+        // const p2Delay = Math.floor(Math.random() * 2000) + 100;
 
-//         // setTimeout(() => {
-//         //     p1BackgroundColor = "#100012";
-//         //     p1Scale = 100;
-//         // }, p1Delay);
+        // setTimeout(() => {
+        //     p1BackgroundColor = "#100012";
+        //     p1Scale = 100;
+        // }, p1Delay);
 
-//         // setTimeout(() => {
-//         //     p2BackgroundColor = "#100012";
-//         //     p2Scale = 100;
-//         // }, p2Delay);
+        // setTimeout(() => {
+        //     p2BackgroundColor = "#100012";
+        //     p2Scale = 100;
+        // }, p2Delay);
 
-//     } else {
-//         instant = ""
-//     }
-// });
+    } else {
+        instant = ""
+    }
+});
 
 // Function to handle person click - now also manages talking state
 function handlePersonClick(id, convoId) {
@@ -256,12 +257,13 @@ onClick={() => handlePersonClick(p1Key, convoId)}
 {zoomPerson}
 opacity={p1Opacity}
 metric={convo[sortCategory]}
-
+{prefersReducedMotion}
 talking={p1talking}
 {value}
 {currentTime}
 {nextTime}
 {var_to_show}
+{instant}
 />
 
 <Person
@@ -285,11 +287,12 @@ onClick={() => handlePersonClick(p2Key, convoId)}
 {zoomPerson}
 opacity={p2Opacity}
 metric={convo[sortCategory]}
-
+{prefersReducedMotion}
 talking={p2talking}
 {value}
 {currentTime}
 {nextTime}
 {var_to_show}
+{instant}
 />
 {/if}
