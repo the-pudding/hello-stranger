@@ -46,7 +46,7 @@
 				...d,
 				tease: d.hed,
 				slug: d.image,
-				href: d.url
+				href: `/${d.url}`
 			}));
 
 			storyCount = filtered.length;
@@ -78,7 +78,7 @@
 						as
 						{#each stories as { short, url }, i}
 							<a href={url} target="_blank" rel="noreferrer">{short}</a>,&nbsp;
-						{/each}and more.
+						{/each}and more!
 					</section>
 				{/if}
 			{/if}
