@@ -319,7 +319,7 @@ style:transform="scale({w/60})"
 {/if}
 <!-- <div class="catData">{spriteKey}</div> -->
 {#if var_to_show}
-<div class="catData">{formatCatData(personData[var_to_show], var_to_show)}</div>
+<div class="catData metrics">{formatCatData(personData[var_to_show], var_to_show)}</div>
 {/if}
 {#if !var_to_show && zoomPerson == convoId && value != 0}
 <div class="catData">{nameLookup[personKey]}</div>
@@ -375,6 +375,7 @@ style:transform="scale({w/60})"
     will-change: transform, opacity;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
+    transform: translateZ(0);
 }
 .instant.person {
     pointer-events: none;
@@ -448,6 +449,6 @@ style:transform="scale({w/60})"
     background: var(--quote-hl-color);
     width: 5px;
     opacity: 0.5;
-    transition: height 100ms cubic-bezier(0.420, 0.000, 0.580, 1.000);
+    /* transition: height 100ms cubic-bezier(0.420, 0.000, 0.580, 1.000); */
 }
 </style>

@@ -74,8 +74,11 @@
 --quote-bg:  #dcbae8;
 --quote-text-color: #4f3059;
 --quote-hl-color: #cf63f2;
-/* "1" second duration */
+
+/* Animation variables for better control */
 --1s: 1ms;
+--animation-duration: 300ms;
+--animation-timing: cubic-bezier(0.25, 0.46, 0.45, 0.94); /* easeOutQuad - smoother than default */
 }
 
 /* dark theme */
@@ -88,6 +91,22 @@
 @media screen and (prefers-reduced-motion: no-preference) {
 	:root {
 		--1s: 1s;
+		--animation-duration: 300ms;
+	}
+}
+
+/* Respect reduced motion preference */
+@media screen and (prefers-reduced-motion: reduce) {
+	:root {
+		--1s: 0ms;
+		--animation-duration: 0ms;
+	}
+	
+	*, *::before, *::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
 	}
 }
 
@@ -130,14 +149,10 @@ svg {
 
 div#content {
 	font-family: var(--serif);
-	/* font-family:  var(--mono); */
-	
-/* 	color: var(--color-light); */
-color: var(--text-color);
-/* overflow-x: hidden; */
-padding-bottom: 0px;
--webkit-text-size-adjust: 100%;
-text-size-adjust: 100%;
+	color: var(--text-color);
+	padding-bottom: 0px;
+	-webkit-text-size-adjust: 100%;
+	text-size-adjust: 100%;
 }
 #scrolly {
 	-webkit-overflow-scrolling: touch;
@@ -149,11 +164,15 @@ text-size-adjust: 100%;
 	top: 0;
 	left: 0;
 	width: 100%;
+	/* max-width: 1800px; */
 	overflow: hidden;
 	margin: 0 auto;
 	height: 100vh;
 	height: calc(var(--vh, 1vh) * 100);
 	contain: layout style paint;
+	/* Add GPU acceleration for better scrolling performance */
+	will-change: transform;
+	transform: translateZ(0);
 }
 .textContainer {
 	width: 400px;
@@ -169,6 +188,8 @@ text-size-adjust: 100%;
 	transform: translateZ(0);
 	backface-visibility: hidden;
 	-webkit-backface-visibility: hidden;
+	/* Optimize for animations */
+	will-change: transform, opacity;
 }
 
 .step.time {
@@ -182,6 +203,9 @@ text-size-adjust: 100%;
 	position: absolute;
 	left: 0;
 	top: 0;
+	/* GPU acceleration */
+	transform: translateZ(0);
+	will-change: transform;
 }
 
 .step {
@@ -200,16 +224,18 @@ text-size-adjust: 100%;
 	/* Prevent text selection which can cause jumps */
 	-webkit-user-select: none;
 	user-select: none;
+	/* Optimize for state changes */
+	will-change: opacity, transform;
 }
 .step.smallText .textContainer {
 	margin: 20px auto;
 }
 .step.bigText {
 	background: var(--bigtext-bg);
-	padding: 20vh 0;
+	padding: 50px 0;
 	min-height: 100vh;
 	position: relative;
-	margin: 20px 0;
+	margin: 200px 0;
 }
 .step.bigText strong {
 	color: white;
@@ -217,10 +243,16 @@ text-size-adjust: 100%;
 }
 .step a {
 	color: var(--text-link-color);
+	/* Smooth hover transitions */
+	transition: color var(--animation-duration) var(--animation-timing);
+}
+.step a:hover {
+	transition-duration: 150ms; /* Faster hover response */
 }
 .byline a {
 	color: var(--text-link-color);
 	text-decoration: none;
+	transition: color var(--animation-duration) var(--animation-timing);
 }
 /* .step.bigText.active .time {
 	font-size: 15px;
@@ -259,7 +291,10 @@ text-size-adjust: 100%;
 }
 .step.active.time, .step.active .time {
 	font-weight: bold;
-	font-size: 15px;
+	font-size: 14px;
+	color: white;
+	/* Smooth font size transitions */
+	transition: font-size var(--animation-duration) var(--animation-timing);
 }
 .step:last-child {
 	padding-bottom: 80px;
@@ -278,6 +313,9 @@ text-size-adjust: 100%;
 	font-size: 11px;
 	font-family: var(--mono);
 	color: var(--person-default-bg);
+	/* Smooth transitions for active states */
+	transition: font-size var(--animation-duration) var(--animation-timing),
+	           font-weight var(--animation-duration) var(--animation-timing);
 }
 /* .step p {
 	padding: 1rem;
@@ -292,6 +330,7 @@ text-size-adjust: 100%;
 .step .note a {
 	color:  var(--text-note-color);
 	text-decoration: none;
+	transition: color var(--animation-duration) var(--animation-timing);
 /* 	border-bottom: 1px dotted #aaa; */
 }
 .step span {
@@ -299,6 +338,8 @@ text-size-adjust: 100%;
 	margin: 0 2px;
 	border-radius: 2px;
 	/* font-weight: bold; */
+	/* Add subtle hover effects */
+	transition: background-color var(--animation-duration) var(--animation-timing);
 }
 .step .yellow {
 	background: #ede977;
@@ -317,7 +358,7 @@ text-size-adjust: 100%;
 	position: absolute;
 	top: calc(100% + 10px);
 	left: 50%;
-	transform: translateX(-50%);
+	transform: translateX(-50%) translateZ(0); /* Add GPU acceleration */
 	background: var(--quote-bg);
 	color: var(--quote-text-color);
 	max-width: 180px;
@@ -328,6 +369,13 @@ text-size-adjust: 100%;
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	/* Optimized transitions */
+	transition: transform var(--animation-duration) var(--animation-timing),
+	           opacity var(--animation-duration) var(--animation-timing),
+	           font-size var(--animation-duration) var(--animation-timing);
+	will-change: transform, opacity, font-size;
+	backface-visibility: hidden;
+	pointer-events: none;
 /* 	transition: all 2000ms cubic-bezier(0.420, 0.000, 0.580, 1.000); 
 	transition-timing-function: cubic-bezier(0.420, 0.000, 0.580, 1.000); */
 }
@@ -348,14 +396,14 @@ text-size-adjust: 100%;
 	font-size: 9px;
 }
 
-@media (max-width: 500px) {
+@media (max-width: 1200px) {
 	.quote {
-		font-size: 11px;
-		max-width: 140px;
-		min-width: 80px;
+		font-size: 9px;
+		max-width: 100px;
 	}	
 	.person2 .quote {
-		left: 0%;
+		left: -60px;
+		transform: translateX(0%) translateZ(0); /* Maintain GPU acceleration */
 	}
 	.person2 .quote:after {
 		content: "";
@@ -370,17 +418,24 @@ text-size-adjust: 100%;
 	}
 
 	.zoomed .quote {
-		font-size: 7px;
+		font-size: 5.5px;
 	}
 }
 
 @media (max-width: 768px) {
 	.visualContainer {
 		/* Keep it simple - reduce height to avoid the mobile browser UI area */
-		height: calc(100vh - 80px);
-		height: calc(var(--vh, 1vh) * 100 - 80px);
+		height: calc(100vh - 0px);
+		height: calc(var(--vh, 1vh) * 100 - 0px);
 		/* Add some top margin to center it better */
-		margin-top: 40px;
+		margin-top: 0px;
+	}
+
+}
+
+@media (max-width: 1080px) {
+.catData.metrics {
+		display: none;
 	}
 }
 .imageContainer {
@@ -485,11 +540,28 @@ text-size-adjust: 100%;
 	text-shadow: 0 0 10px black;
 	font-family: var(--mono);
 	font-weight: bold;
-	transition: all var(--speed, 1s) ease-in-out;
-}
-.reducedMotiontrue .catData, .reducedMotiontrue .asciiContainer {
-	transition: none;
+	/* Optimized transition with specific properties */
+	transition: transform var(--animation-duration) var(--animation-timing),
+	           opacity var(--animation-duration) var(--animation-timing),
+	           font-size var(--animation-duration) var(--animation-timing);
+	will-change: transform, opacity, font-size;
+	transform: translateZ(0); /* GPU acceleration */
 }
 .zoomed .catData {
-	font-size: 9px !important;
+	font-size: 9px;
 }
+@media screen and (max-width: 1200px) {
+	.zoomed .catData {
+		font-size: 6px;
+	}
+}
+/* Unified reduced motion handling */
+.reducedMotiontrue .catData, 
+.reducedMotiontrue .asciiContainer,
+.reducedMotiontrue .quote,
+.reducedMotiontrue .step,
+.reducedMotiontrue .textContainer {
+	transition: none !important;
+	animation: none !important;
+}
+
