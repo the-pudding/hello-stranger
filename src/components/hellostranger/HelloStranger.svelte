@@ -684,7 +684,7 @@
   </section>
   
   <div class="bottomWords">
-    Thanks for reading to the end ◡̈
+    Thanks for reading this story ◡̈
   </div>
 </div>
 

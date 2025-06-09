@@ -97,7 +97,7 @@ const affectDiff = [{
 
 // Cache color arrays to avoid recreating them on each render
 const defaultColor = getComputedStyle(document.documentElement).getPropertyValue('--person-default-bg').trim();
-const affectPositiveColors = ["#ede977"];
+const affectPositiveColors = ["#e8e592"];
 const affectNeutralColor = "#706267";
 const affectNegativeColors = ["#ff6bab"];
 
@@ -114,8 +114,8 @@ function getAffectColor(val, category) {
     }
 
     if (category == "raw") {
-        const rawColors = ["#f59de2","#f59de2","#706267","#706267","#9bc7d1","#9bc7d1"]
-        return rawColors[Math.min(Math.max(0, Math.round(val / 10 * rawColors.length) - 1), rawColors.length - 1)];
+        const rawColors = ["#f59de2","#f59de2","#f59de2","#f59de2","#706267","#706267","#706267","#9bc7d1","#9bc7d1","#9bc7d1"]
+        return rawColors[Math.min(Math.max(0, Math.round(val / 10 * (rawColors.length - 1) ) ), rawColors.length - 1)];
     } else {
         const constrainedVal = Math.max(-5, Math.min(5, val));
 
