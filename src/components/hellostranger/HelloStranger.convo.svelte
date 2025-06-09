@@ -197,25 +197,25 @@ $effect(() => {
 
 let instant = $state("");
 $effect(() => {
-    if (value === 1800) {
-        instant = "instant"
-        // Generate random delays between 100ms and 1500ms
-        // const p1Delay = Math.floor(Math.random() * 2000) + 100;
-        // const p2Delay = Math.floor(Math.random() * 2000) + 100;
+    // if (value === 1800) {
+    //     instant = "instant"
+    //     // Generate random delays between 100ms and 1500ms
+    //     // const p1Delay = Math.floor(Math.random() * 2000) + 100;
+    //     // const p2Delay = Math.floor(Math.random() * 2000) + 100;
 
-        // setTimeout(() => {
-        //     p1BackgroundColor = "#100012";
-        //     p1Scale = 100;
-        // }, p1Delay);
+    //     // setTimeout(() => {
+    //     //     p1BackgroundColor = "#100012";
+    //     //     p1Scale = 100;
+    //     // }, p1Delay);
 
-        // setTimeout(() => {
-        //     p2BackgroundColor = "#100012";
-        //     p2Scale = 100;
-        // }, p2Delay);
+    //     // setTimeout(() => {
+    //     //     p2BackgroundColor = "#100012";
+    //     //     p2Scale = 100;
+    //     // }, p2Delay);
 
-    } else {
-        instant = ""
-    }
+    // } else {
+    //     instant = ""
+    // }
 });
 
 // Function to handle person click - now also manages talking state

@@ -638,12 +638,12 @@
         {#each timeRange as time, i}
           {@const active = value === i}
           {@const copyData = checkCopy(time)}
-          {#if checkCopy(time) == false || checkCopy(time).time==0 || checkCopy(time).time > 1780 || checkCopy(time).quotePerson != null}
+          {#if checkCopy(time) == false || checkCopy(time).time==0 || checkCopy(time).time == 1770 || checkCopy(time).quotePerson != null}
             <div class="step time" class:active>
               {convertTime(time)}
             </div>
           {:else}
-            <div class="step {copyData.addclass || 'smallText'}" class:active>
+            <div class="step {copyData.addclass || 'smallText'} {checkCopy(time).time == 1800 ? 'lastStep' : ''}" class:active>
               <div class="time">{convertTime(time)}</div>
               <Text copy={copyData.text} time={convertTime(time)} legend={copyData.legend}/>
             </div>
@@ -683,14 +683,14 @@
     </div>
   </section>
   
-  <div class="bottomWords">
-    Thanks for reading this story ◡̈
-  </div>
+<!--   <div class="bottomWords">
+   Thanks for reading this story ◡̈
+  </div> -->
 </div>
 
 <style>
   .bottomWords {
-    margin: 100px 0;
+    margin: 300px 0 0;
     text-align: center;
   }
   
@@ -733,7 +733,7 @@
     position: relative;
     z-index: 100;
     pointer-events: none;
-    padding-bottom: 500px;
+    /* padding-bottom: 500px; */
     transform: none;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
