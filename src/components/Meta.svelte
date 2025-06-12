@@ -2,7 +2,7 @@
 	let {
 		title = "30 minutes with a stranger",
 		description = "Watch hundreds of strangers talk for 30 minutes, and track how their moods change",
-		url = "https://pudding.cool/2025/06/stranger",
+		url = "https://pudding.cool/2025/06/hello-stranger",
 		keywords = "",
 		preloadFont = []
 	} = $props();
