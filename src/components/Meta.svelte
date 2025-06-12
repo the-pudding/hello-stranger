@@ -1,7 +1,7 @@
 <script>
 	let {
 		title = "30 minutes with a stranger",
-		description = "Description TK",
+		description = "Watch hundreds of strangers talk for 30 minutes, and track how their moods change",
 		url = "https://pudding.cool/2025/06/stranger",
 		keywords = "",
 		preloadFont = []
@@ -24,7 +24,7 @@
 	<meta property="og:image" content="{url}/assets/social-facebook.jpg" />
 	<meta property="og:image:type" content="image/jpeg" />
 	<meta property="og:image:width" content="1200" />
-	<meta property="og:image:height" content="628" />
+	<meta property="og:image:height" content="630" />
 
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="https://pudding.cool" />
